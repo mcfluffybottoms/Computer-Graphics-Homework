@@ -1,3 +1,6 @@
 build
+build-release
 cmake-build-*
 .idea
+.cache
+.ccls-cache

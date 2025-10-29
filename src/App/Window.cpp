@@ -55,6 +55,7 @@ Window::~Window()
 		const auto guard = bindContext();
 		texture_.reset();
 		program_.reset();
+		if(camera) delete camera;
 	}
 }
 
@@ -103,6 +104,11 @@ void Window::onInit()
 
 	mvpUniform_ = program_->uniformLocation("mvp");
 
+	// Camera
+	camera = new Camera();
+	const auto aspect = static_cast<float>(width()) / static_cast<float>(height());
+    camera->setToPerspective(60.0f, aspect, 0.1f, 100.0f);
+
 	// Release all
 	program_->release();
 
@@ -129,8 +135,7 @@ void Window::onRender()
 	// Calculate MVP matrix
 	model_.setToIdentity();
 	model_.translate(0, 0, -2);
-	view_.setToIdentity();
-	const auto mvp = projection_ * view_ * model_;
+	const auto mvp = camera->getProjection() * camera->getView() * model_;
 
 	// Bind VAO and shader program
 	program_->bind();
@@ -166,12 +171,14 @@ void Window::onResize(const size_t width, const size_t height)
 	glViewport(0, 0, static_cast<GLint>(width), static_cast<GLint>(height));
 
 	// Configure matrix
-	const auto aspect = static_cast<float>(width) / static_cast<float>(height);
-	const auto zNear = 0.1f;
-	const auto zFar = 100.0f;
-	const auto fov = 60.0f;
-	projection_.setToIdentity();
-	projection_.perspective(fov, aspect, zNear, zFar);
+	if (camera)
+	{
+		const auto aspect = static_cast<float>(width) / static_cast<float>(height);
+		const auto zNear = 0.1f;
+		const auto zFar = 100.0f;
+		const auto fov = 60.0f;
+		camera->setToPerspective(fov, aspect, zNear, zFar);
+	}
 }
 
 Window::PerfomanceMetricsGuard::PerfomanceMetricsGuard(std::function<void()> callback)
@@ -201,3 +208,55 @@ auto Window::captureMetrics() -> PerfomanceMetricsGuard
 		}
 	};
 }
+
+void Window::mousePressEvent(QMouseEvent * event)
+{
+	if (camera && event->button() == Qt::LeftButton)
+	{
+		lastMousePos_ = event->pos();
+		camera->startDrag(event->pos().x(), event->pos().y());
+		firstMouse_ = true;
+	}
+	fgl::GLWidget::mousePressEvent(event);
+}
+
+void Window::mouseMoveEvent(QMouseEvent * event)
+{
+	if (!camera)
+		return;
+
+	if (event->buttons() & Qt::LeftButton)
+	{
+		if (firstMouse_)
+		{
+			lastMousePos_ = event->pos();
+			firstMouse_ = false;
+		}
+
+		lastMousePos_ = event->pos();
+
+		camera->dragMove(event->pos().x(), event->pos().y());
+	}
+	
+	fgl::GLWidget::mouseMoveEvent(event);
+}
+
+void Window::mouseReleaseEvent(QMouseEvent* event) {
+	if (camera && event->button() == Qt::RightButton) {
+		camera->endDrag();
+	}
+	fgl::GLWidget::mouseReleaseEvent(event);
+}
+
+#if QT_CONFIG(wheelevent)
+void Window::wheelEvent(QWheelEvent *event) {
+    if (!camera) {
+        fgl::GLWidget::wheelEvent(event);
+        return;
+    }
+    
+    float delta = event->angleDelta().y() / 120.0f;
+    camera->zoom(delta);
+    fgl::GLWidget::wheelEvent(event);
+}
+#endif

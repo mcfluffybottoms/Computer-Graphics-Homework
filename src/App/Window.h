@@ -9,6 +9,8 @@
 #include <QOpenGLTexture>
 #include <QOpenGLVertexArrayObject>
 
+#include "Camera.h"
+
 #include <functional>
 #include <memory>
 
@@ -24,6 +26,13 @@ public: // fgl::GLWidget
 	void onRender() override;
 	void onResize(size_t width, size_t height) override;
 
+protected:
+	void mousePressEvent(QMouseEvent * event) override;
+	void mouseMoveEvent(QMouseEvent * event) override;
+	void mouseReleaseEvent(QMouseEvent* event) override;
+	#if QT_CONFIG(wheelevent)
+		void wheelEvent(QWheelEvent *event) override;
+	#endif
 private:
 	class PerfomanceMetricsGuard final
 	{
@@ -55,14 +64,19 @@ private:
 	QOpenGLVertexArrayObject vao_;
 
 	QMatrix4x4 model_;
-	QMatrix4x4 view_;
-	QMatrix4x4 projection_;
+	// QMatrix4x4 view_;
+	// QMatrix4x4 projection_;
 
 	std::unique_ptr<QOpenGLTexture> texture_;
 	std::unique_ptr<QOpenGLShaderProgram> program_;
 
 	QElapsedTimer timer_;
 	size_t frameCount_ = 0;
+
+	Camera* camera = nullptr;
+	bool firstMouse_{true};
+	QPoint lastMousePos_;
+
 
 	struct {
 		size_t fps = 0;
