@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include <cmath>
+#include <GL/glew.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -13,56 +14,12 @@ inline float degreesToRadians(float degrees)
 Camera::Camera() {
     updateCameraVectors();
 }
-void Camera::setToOthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane) {
-    projection_.setToIdentity();
-    projection_.ortho(left, right, bottom, top, nearPlane, farPlane);
-}
 void Camera::setToPerspective(float fov, float aspect, float nearPlane, float farPlane) {
     projection_.setToIdentity();
+    fov_ = fov;
+    nearPlane_ = nearPlane;
+    farPlane_ = farPlane;
 	projection_.perspective(fov, aspect, nearPlane, farPlane);
-}
-// getters and setters
-float& Camera::yaw() {
-    if_need_to_recalc_view = true;
-    return yaw_;
-}
-float& Camera::pitch() {
-    if_need_to_recalc_view = true;
-    return pitch_;
-}
-float& Camera::minPitch() {
-    if_need_to_recalc_view = true;
-    return min_pitch_;
-}
-float& Camera::maxPitch() {
-    if_need_to_recalc_view = true;
-    return max_pitch_;
-}
-float& Camera::mouseSensitivity() {
-    if_need_to_recalc_view = true;
-    return mouse_sensitivity_;
-}
-float& Camera::moveSpeed() {
-    if_need_to_recalc_view = true;
-    return move_speed_;
-}
-float Camera::yaw() const {
-    return yaw_;
-}
-float Camera::pitch() const {
-    return pitch_;
-}
-float Camera::minPitch() const {
-    return min_pitch_;
-}
-float Camera::maxPitch() const {
-    return max_pitch_;
-}
-float Camera::mouseSensitivity() const {
-    return mouse_sensitivity_;
-}
-float Camera::moveSpeed() const {
-    return move_speed_;
 }
 void Camera::setProjection(const QMatrix4x4& p) {
     if_need_to_recalc_view = true;
@@ -109,41 +66,42 @@ QVector3D Camera::z() const {
     return z_;
 }
 // proccessing movement
-QVector2D Camera::getWorldCoord(float screenX, float screenY, float width, float height) const {
-    float x = (2.0f * screenX) / width - 1.0f;
-    float y = 1.0f - (2.0f * screenY) / height;
-    QVector4D screenPos(x, y, 0.0f, 1.0f);
-    QMatrix4x4 inv = (projection_ * view_).inverted();
-    QVector4D worldPos = inv * screenPos;
-    if (worldPos.w() != 0.0f) {
-        worldPos /= worldPos.w();
-    }
-    
-    return QVector2D(worldPos.x(), worldPos.y());
+QVector3D Camera::getWorldCoord(float screenX, float screenY, float width, float height, float distance) {
+    float nx = 2.0f * screenX / width - 1.0f;
+    float ny = 1.0f - 2.0f * screenY / height;
+    float X_NDC = 2.0f * distance / projection_(0,0);
+    float Y_NDC  = 2.0f * distance / projection_(1,1);
+    float wx = nx * X_NDC + position_.x();
+    float wy = ny * Y_NDC + position_.y();
+    float wz = position_.z() - distance;
+    return QVector3D(wx, wy, wz);
 }
-void Camera::zoom(float distance) {
-    position_ += y_ * distance * zoom_speed_;
+
+void Camera::zoom(float mousePosX, float mousePosY, float distance, float width, float height, float dpr) {
+    QVector3D before = getWorldCoord(mousePosX, mousePosY, width, height, distance);
+    fov_ = fov_ * std::pow(1.1f, -distance);
+    setToPerspective(fov_, width / height, nearPlane_, farPlane_);
+    QVector3D after = getWorldCoord(mousePosX, mousePosY, width, height, distance);
+    QVector3D delta = before - after;
+    position_ += delta;
     updateCameraVectors();
 }
+
 void Camera::startDrag(float mousePosX, float mousePosY) {
     isDragging_ = true;
-    lastMousePos_ = getWorldCoord(mousePosX, mousePosY, 1.0f, 1.0f);
+    lastMousePos_ = QVector2D(mousePosX, mousePosY);
     dragStartPosition_ = position_;
 }
-void Camera::dragMove(float mousePosX, float mousePosY) {
-    if (!isDragging_)
-        return;
 
-    QVector2D currWorld = getWorldCoord(mousePosX, mousePosY, 1.0f, 1.0f);
-    QVector2D delta = (lastMousePos_ - currWorld) * mouse_sensitivity_;
-    float deltaLength = delta.length();
-    if (deltaLength > max_move_speed_) {
-        delta = delta.normalized() * max_move_speed_;
-    }
-    position_ += QVector3D(delta, 0.0f);
+void Camera::dragMove(float mousePosX, float mousePosY, float width, float height, float dpr) {
+    if (!isDragging_) return;
+    QVector3D currentWorld = getWorldCoord(mousePosX, mousePosY, width, height, 1);
+    QVector3D startWorld = getWorldCoord(lastMousePos_.x(), lastMousePos_.y(), width, height, 1);
+    QVector3D delta = startWorld - currentWorld;
+    position_ = dragStartPosition_ + dpr * delta;
     updateCameraVectors();
-    lastMousePos_ = currWorld;
 }
+
 void Camera::endDrag() {
     isDragging_ = false;
 }

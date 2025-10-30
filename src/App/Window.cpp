@@ -107,7 +107,7 @@ void Window::onInit()
 	// Camera
 	camera = new Camera();
 	const auto aspect = static_cast<float>(width()) / static_cast<float>(height());
-    camera->setToPerspective(60.0f, aspect, 0.1f, 100.0f);
+   	camera->setToPerspective(60.0f, aspect, 0.1f, 100.0f);
 
 	// Release all
 	program_->release();
@@ -213,9 +213,7 @@ void Window::mousePressEvent(QMouseEvent * event)
 {
 	if (camera && event->button() == Qt::LeftButton)
 	{
-		lastMousePos_ = event->pos();
 		camera->startDrag(event->pos().x(), event->pos().y());
-		firstMouse_ = true;
 	}
 	fgl::GLWidget::mousePressEvent(event);
 }
@@ -227,15 +225,8 @@ void Window::mouseMoveEvent(QMouseEvent * event)
 
 	if (event->buttons() & Qt::LeftButton)
 	{
-		if (firstMouse_)
-		{
-			lastMousePos_ = event->pos();
-			firstMouse_ = false;
-		}
-
-		lastMousePos_ = event->pos();
-
-		camera->dragMove(event->pos().x(), event->pos().y());
+		const qreal dpr = devicePixelRatio();
+		camera->dragMove(event->pos().x(), event->pos().y(), QWidget::width(), QWidget::height(), dpr);
 	}
 	
 	fgl::GLWidget::mouseMoveEvent(event);
@@ -254,9 +245,9 @@ void Window::wheelEvent(QWheelEvent *event) {
         fgl::GLWidget::wheelEvent(event);
         return;
     }
-    
     float delta = event->angleDelta().y() / 120.0f;
-    camera->zoom(delta);
+	const qreal dpr = devicePixelRatio();
+    camera->zoom(event->pos().x(), event->pos().y(), delta, QWidget::width(), QWidget::height(), dpr);
     fgl::GLWidget::wheelEvent(event);
 }
 #endif
