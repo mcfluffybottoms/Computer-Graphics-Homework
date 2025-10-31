@@ -1,6 +1,7 @@
 #include "Camera.h"
 #include <cmath>
 #include <GL/glew.h>
+#include <qvector4d.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -20,6 +21,13 @@ void Camera::setToPerspective(float fov, float aspect, float nearPlane, float fa
     nearPlane_ = nearPlane;
     farPlane_ = farPlane;
 	projection_.perspective(fov, aspect, nearPlane, farPlane);
+}
+void Camera::setToOrthographic(float left, float right, float top, float bottom, float nearPlane, float farPlane) {
+    projection_.setToIdentity();
+    ortho_ = QVector4D(left, right, top, bottom);
+    nearPlane_ = nearPlane;
+    farPlane_ = farPlane;
+	projection_.ortho(left, right, top, bottom, nearPlane, farPlane);
 }
 void Camera::setProjection(const QMatrix4x4& p) {
     if_need_to_recalc_view = true;

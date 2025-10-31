@@ -8,6 +8,7 @@
 #include <QScreen>
 
 #include <array>
+#include <qmatrix4x4.h>
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -18,12 +19,13 @@
 namespace
 {
 
-constexpr std::array<GLfloat, 21u> vertices = {
-	0.0f, 0.707f, 1.f, 0.f, 0.f, 0.0f, 0.0f,
-	-0.5f, -0.5f, 0.f, 1.f, 0.f, 0.5f, 1.0f,
-	0.5f, -0.5f, 0.f, 0.f, 1.f, 1.0f, 0.0f,
+const std::array<GLfloat, 12> vertices = {
+    -5.f, -5.f,
+     5.f, -5.f,
+     5.f,  5.f,
+    -5.f,  5.f,
 };
-constexpr std::array<GLuint, 3u> indices = {0, 1, 2};
+const std::array<GLuint, 6> indices = {0, 1, 2, 2, 3, 0};
 
 }// namespace
 
@@ -63,11 +65,10 @@ void Window::onInit()
 {
 	// Configure shaders
 	program_ = std::make_unique<QOpenGLShaderProgram>(this);
-	program_->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/diffuse.vs");
-	program_->addShaderFromSourceFile(QOpenGLShader::Fragment,
-									  ":/Shaders/diffuse.fs");
+	program_->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/fractal.vs");
+	program_->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment,
+									  ":/Shaders/fractal.fs");
 	program_->link();
-
 	// Create VAO object
 	vao_.create();
 	vao_.bind();
@@ -84,30 +85,20 @@ void Window::onInit()
 	ibo_.setUsagePattern(QOpenGLBuffer::StaticDraw);
 	ibo_.allocate(indices.data(), static_cast<int>(indices.size() * sizeof(GLuint)));
 
-	texture_ = std::make_unique<QOpenGLTexture>(QImage(":/Textures/voronoi.png"));
-	texture_->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
-	texture_->setWrapMode(QOpenGLTexture::WrapMode::Repeat);
-
 	// Bind attributes
 	program_->bind();
 
 	program_->enableAttributeArray(0);
-	program_->setAttributeBuffer(0, GL_FLOAT, 0, 2, static_cast<int>(7 * sizeof(GLfloat)));
+	program_->setAttributeBuffer(0, GL_FLOAT, 0, 2, static_cast<int>(2 * sizeof(GLfloat)));
 
-	program_->enableAttributeArray(1);
-	program_->setAttributeBuffer(1, GL_FLOAT, static_cast<int>(2 * sizeof(GLfloat)), 3,
-								 static_cast<int>(7 * sizeof(GLfloat)));
-
-	program_->enableAttributeArray(2);
-	program_->setAttributeBuffer(2, GL_FLOAT, static_cast<int>(5 * sizeof(GLfloat)), 2,
-								 static_cast<int>(7 * sizeof(GLfloat)));
-
+	// Uniform values for shader
 	mvpUniform_ = program_->uniformLocation("mvp");
 
 	// Camera
 	camera = new Camera();
 	const auto aspect = static_cast<float>(width()) / static_cast<float>(height());
    	camera->setToPerspective(60.0f, aspect, 0.1f, 100.0f);
+	camera->position() = QVector3D(0.0f, 0.0f, 0.0f);
 
 	// Release all
 	program_->release();
@@ -136,23 +127,15 @@ void Window::onRender()
 	model_.setToIdentity();
 	model_.translate(0, 0, -2);
 	const auto mvp = camera->getProjection() * camera->getView() * model_;
-
 	// Bind VAO and shader program
 	program_->bind();
 	vao_.bind();
-
 	// Update uniform value
 	program_->setUniformValue(mvpUniform_, mvp);
 
-	// Activate texture unit and bind texture
-	glActiveTexture(GL_TEXTURE0);
-	texture_->bind();
-
-	// Draw
-	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
 	// Release VAO and shader program
-	texture_->release();
 	vao_.release();
 	program_->release();
 

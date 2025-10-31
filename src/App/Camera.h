@@ -13,6 +13,7 @@ struct Camera {
 
     // matrices
     void setProjection(const QMatrix4x4& p);
+    void setToOrthographic(float left, float right, float top, float bottom, float nearPlane, float farPlane);
     void setView(const QMatrix4x4& v);
     QMatrix4x4& getView();
     QMatrix4x4 getProjection() const;
@@ -40,6 +41,7 @@ private:
     float fov_{1.0f};
     float nearPlane_{0.1f};
     float farPlane_{100.0f};
+    QVector4D ortho_{0.0f, 0.0f, 0.0f, 0.0f};
 
     // position of a camera
     QVector3D position_{0.0f, 0.0f, 0.0f};
