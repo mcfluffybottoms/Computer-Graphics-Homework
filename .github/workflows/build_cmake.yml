@@ -106,6 +106,7 @@ jobs:
         if: "contains(matrix.config.name, 'MinGW')"
         uses: jurplel/install-qt-action@v4
         with:
+          version: '6.7.2'
           cached: ${{ steps.cache.outputs.cache-hit }}
           arch: 'win64_mingw81'
 
