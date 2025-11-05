@@ -5,6 +5,9 @@ set(SRCS
 
     Camera.cpp
     Camera.h
+
+    SliderGroup.cpp
+    SliderGroup.h
     
     Shaders/fractal.fs
     Shaders/fractal.vs

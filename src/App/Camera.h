@@ -1,4 +1,5 @@
 #pragma once
+#include "SliderGroup.h"
 #include <QMatrix4x4>
 #include <QSet>
 #include <QVector4D>
