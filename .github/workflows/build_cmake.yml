@@ -104,14 +104,14 @@ jobs:
 
       - name: Install Qt MinGW
         if: "contains(matrix.config.name, 'MinGW')"
-        uses: jurplel/install-qt-action@v2
+        uses: jurplel/install-qt-action@v4
         with:
           cached: ${{ steps.cache.outputs.cache-hit }}
           arch: 'win64_mingw81'
 
       - name: Install Qt
         if: "!contains(matrix.config.name, 'MinGW')"
-        uses: jurplel/install-qt-action@v2
+        uses: jurplel/install-qt-action@v4
         with:
           cached: ${{ steps.cache.outputs.cache-hit }}
 
