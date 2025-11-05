@@ -39,8 +39,8 @@ jobs:
             build_type: "Release", cc: "gcc", cxx: "g++"
           }
     steps:
-      - uses: actions/checkout@v1
-      - uses: ilammy/msvc-dev-cmd@v1
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v4
 
       - name: Download Ninja and CMake
         id: cmake_and_ninja
