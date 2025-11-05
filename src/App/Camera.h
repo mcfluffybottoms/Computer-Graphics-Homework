@@ -5,6 +5,11 @@
 #include <QVector3D>
 #include <QVector2D>
 
+enum VIEW_TYPE {
+    ORTHOGRAPHIC,
+    PERSPECTIVE
+};
+
 struct Camera {
     Camera();
     ~Camera() = default;
@@ -13,7 +18,7 @@ struct Camera {
 
     // matrices
     void setProjection(const QMatrix4x4& p);
-    void setToOrthographic(float left, float right, float top, float bottom, float nearPlane, float farPlane);
+    void setToOrthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane);
     void setView(const QMatrix4x4& v);
     QMatrix4x4& getView();
     QMatrix4x4 getProjection() const;
@@ -39,9 +44,13 @@ private:
     float yaw_{-90.0f};
 	float pitch_{0.0f};
     float fov_{1.0f};
+    float left_ = 0;
+    float right_ = 0;
+    float top_  = 0;
+    float bottom_ = 0;
     float nearPlane_{0.1f};
     float farPlane_{100.0f};
-    QVector4D ortho_{0.0f, 0.0f, 0.0f, 0.0f};
+    VIEW_TYPE view_type = PERSPECTIVE;
 
     // position of a camera
     QVector3D position_{0.0f, 0.0f, 0.0f};

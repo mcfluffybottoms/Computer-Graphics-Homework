@@ -2,6 +2,7 @@
 
 #include <Base/GLWidget.hpp>
 
+#include <GL/gl.h>
 #include <QElapsedTimer>
 #include <QMatrix4x4>
 #include <QOpenGLBuffer>
@@ -57,30 +58,31 @@ signals:
 	void updateUI();
 
 private:
+	void changeCameraPerspective(float width, float height);
+
 	GLint mvpUniform_ = -1;
+	GLfloat widthUniform_ = 1000.0f;
+	GLfloat heightUniform_ = 1000.0f;
+    GLfloat fromXUniform_ = -2.5;
+    GLfloat fromYUniform_ = -1.5;
+    GLfloat sizeXUniform_ = 1000.0;
+    GLfloat sizeYUniform_ = 1000.0;
+	GLint maxItersUniform_ = 100;
 
 	QOpenGLBuffer vbo_{QOpenGLBuffer::Type::VertexBuffer};
 	QOpenGLBuffer ibo_{QOpenGLBuffer::Type::IndexBuffer};
 	QOpenGLVertexArrayObject vao_;
-
-	QMatrix4x4 model_;
-	// QMatrix4x4 view_;
-	// QMatrix4x4 projection_;
-
-	std::unique_ptr<QOpenGLTexture> texture_;
 	std::unique_ptr<QOpenGLShaderProgram> program_;
 
+	// navigation
+	QMatrix4x4 model_;
+	Camera* camera = nullptr;
+
+	// count fps
 	QElapsedTimer timer_;
 	size_t frameCount_ = 0;
-
-	Camera* camera = nullptr;
-	bool firstMouse_{true};
-	QPoint lastMousePos_;
-
-
 	struct {
 		size_t fps = 0;
 	} ui_;
-
 	bool animated_ = true;
 };

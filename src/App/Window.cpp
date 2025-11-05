@@ -21,13 +21,25 @@ namespace
 
 const std::array<GLfloat, 12> vertices = {
     -5.f, -5.f,
-     5.f, -5.f,
-     5.f,  5.f,
+    5.f, -5.f,
+    5.f,  5.f,
     -5.f,  5.f,
 };
 const std::array<GLuint, 6> indices = {0, 1, 2, 2, 3, 0};
 
 }// namespace
+
+
+void Window::changeCameraPerspective(float width, float height) {
+	const float aspect = float(height) / float(width);
+    const float left = -1.0f;
+    const float right = 1.0f;
+    const float top = 1.0f * aspect;
+    const float bottom = -1.0f * aspect;
+	const float nearPlane = 0.1f;
+    const float farPlane = 100.0f;
+	camera->setToOrthographic(left, right, bottom, top, nearPlane, farPlane);
+}
 
 Window::Window() noexcept
 {
@@ -55,7 +67,6 @@ Window::~Window()
 	{
 		// Free resources with context bounded.
 		const auto guard = bindContext();
-		texture_.reset();
 		program_.reset();
 		if(camera) delete camera;
 	}
@@ -96,10 +107,8 @@ void Window::onInit()
 
 	// Camera
 	camera = new Camera();
-	const auto aspect = static_cast<float>(width()) / static_cast<float>(height());
-   	camera->setToPerspective(60.0f, aspect, 0.1f, 100.0f);
-	camera->position() = QVector3D(0.0f, 0.0f, 0.0f);
-
+	changeCameraPerspective((float)width(), (float)height());
+		
 	// Release all
 	program_->release();
 
@@ -156,11 +165,7 @@ void Window::onResize(const size_t width, const size_t height)
 	// Configure matrix
 	if (camera)
 	{
-		const auto aspect = static_cast<float>(width) / static_cast<float>(height);
-		const auto zNear = 0.1f;
-		const auto zFar = 100.0f;
-		const auto fov = 60.0f;
-		camera->setToPerspective(fov, aspect, zNear, zFar);
+		changeCameraPerspective((float)width, (float)height);
 	}
 }
 
@@ -196,7 +201,7 @@ void Window::mousePressEvent(QMouseEvent * event)
 {
 	if (camera && event->button() == Qt::LeftButton)
 	{
-		camera->startDrag(event->pos().x(), event->pos().y());
+		camera->startDrag((float)event->pos().x(), (float)event->pos().y());
 	}
 	fgl::GLWidget::mousePressEvent(event);
 }
@@ -209,7 +214,7 @@ void Window::mouseMoveEvent(QMouseEvent * event)
 	if (event->buttons() & Qt::LeftButton)
 	{
 		const qreal dpr = devicePixelRatio();
-		camera->dragMove(event->pos().x(), event->pos().y(), QWidget::width(), QWidget::height(), dpr);
+		camera->dragMove((float)event->pos().x(), (float)event->pos().y(), (float)QWidget::width(), (float)QWidget::height(), (float)dpr);
 	}
 	
 	fgl::GLWidget::mouseMoveEvent(event);
@@ -228,9 +233,9 @@ void Window::wheelEvent(QWheelEvent *event) {
         fgl::GLWidget::wheelEvent(event);
         return;
     }
-    float delta = event->angleDelta().y() / 120.0f;
+    float delta = (float)event->angleDelta().y() / 120.0f;
 	const qreal dpr = devicePixelRatio();
-    camera->zoom(event->pos().x(), event->pos().y(), delta, QWidget::width(), QWidget::height(), dpr);
+    camera->zoom((float)event->position().x(), (float)event->position().y(), delta, (float)QWidget::width(), (float)QWidget::height(), dpr);
     fgl::GLWidget::wheelEvent(event);
 }
 #endif
