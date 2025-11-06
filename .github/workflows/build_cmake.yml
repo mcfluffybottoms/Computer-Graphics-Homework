@@ -113,9 +113,10 @@ jobs:
       - name: Setup MinGW PATH (Qt MinGW)
         if: "contains(matrix.config.name, 'MinGW')"
         run: |
-          echo "::add-path::${{ env.Qt5_DIR }}/../../../Tools/mingw81_64/bin"
-          echo "CC=gcc" >> $GITHUB_ENV
-          echo "CXX=g++" >> $GITHUB_ENV
+          MINGW_BIN="${{ env.Qt5_DIR }}/../../../Tools/mingw81_64/bin"
+          echo "$MINGW_BIN" >> $GITHUB_PATH
+          echo "CC=$MINGW_BIN/gcc.exe" >> $GITHUB_ENV
+          echo "CXX=$MINGW_BIN/g++.exe" >> $GITHUB_ENV
 
       - name: Install Qt
         if: "!contains(matrix.config.name, 'MinGW')"
