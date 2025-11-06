@@ -76,6 +76,8 @@ private:
     GLfloat sizeXUniform_ = 2000.0;
     GLfloat sizeYUniform_ = 2000.0;
 	GLint maxItersUniform_ = 100;
+	GLfloat THRESHOLD1Uniform_ = 256.0f;
+    GLfloat THRESHOLD2Uniform_ = 65536.0f;
 	GLboolean isSmoothingUniform_ = true;
 	GLint AUniform_ = 0;
 	GLint BUniform_ = 0;

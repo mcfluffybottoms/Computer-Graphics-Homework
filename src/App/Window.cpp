@@ -64,6 +64,8 @@ void Window::initUniformValues()
 	sizeXUniform_ = program_->uniformLocation("sizeX");
 	sizeYUniform_ = program_->uniformLocation("sizeY");
 	maxItersUniform_ = program_->uniformLocation("maxIters");
+	THRESHOLD1Uniform_ = program_->uniformLocation("THRESHOLD1");
+	THRESHOLD2Uniform_ = program_->uniformLocation("THRESHOLD2");
 	isSmoothingUniform_ = program_->uniformLocation("isSmoothing");
 	brightnessUniform_ = program_->uniformLocation("brightness");
 	contrastUniform_ = program_->uniformLocation("contrast");
@@ -85,6 +87,8 @@ void Window::setUniformValues(const QMatrix4x4& mvp)
 	program_->setUniformValue(sizeYUniform_, slidersGroup_->sizeY);
 	program_->setUniformValue(maxItersUniform_, slidersGroup_->maxIters);
 	program_->setUniformValue(isSmoothingUniform_, slidersGroup_->isSmoothing);
+	program_->setUniformValue(THRESHOLD1Uniform_, slidersGroup_->THRESHOLD1);
+	program_->setUniformValue(THRESHOLD2Uniform_, slidersGroup_->THRESHOLD2);
 	// colors
 	program_->setUniformValue(brightnessUniform_, slidersGroup_->brightness);
 	program_->setUniformValue(contrastUniform_, slidersGroup_->contrast);

@@ -23,6 +23,9 @@ public:
 	int maxIters = 100;
 	bool isSmoothing = true;
 
+    float THRESHOLD1 = 256.0f;
+    float THRESHOLD2 = 65536.0f; 
+
     // colors
     float brightness = 1.0f;
 	float contrast = 1.0f;
@@ -44,11 +47,17 @@ signals:
     void colorCChanged(const QVector3D& value);
     void colorDChanged(const QVector3D& value);
 
+    void THRESHOLD1Changed(int value);
+    void THRESHOLD2Changed(int value);
+
 private slots:
 	void onFromXChanged(int value);
 	void onFromYChanged(int value);
 	void onSizeChanged(int value);
 	void onMaxItersChanged(int value);
+
+    void onTHRESHOLD1Changed(int value);
+	void onTHRESHOLD2Changed(int value);
 
     void onBrightnessChanged(int value);
     void onContrastChanged(int value);
@@ -73,6 +82,8 @@ private:
 	QSlider * fromY_;
 	QSlider * size_;
     QSlider * maxIters_;
+    QSlider * THRESHOLD1_;
+	QSlider * THRESHOLD2_;
     // colors
     QSlider * brightness_;
 	QSlider * contrast_;

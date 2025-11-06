@@ -17,7 +17,9 @@ void SlidersGroup::createSliders()
 
 	// positions
 	positionsLayout = new QVBoxLayout(positionsGroup);
-	fromX_ = addSlider(-50, 50, fromX, 0.1f, "From X:", positionsLayout);
+	THRESHOLD1_ = addSlider(-1000, 1000, fromX, 0.1f, "THRESHOLD1:", positionsLayout);
+	THRESHOLD2_ = addSlider(-10000, 10000, fromY, 0.1f, "THRESHOLD2:", positionsLayout);
+    fromX_ = addSlider(-50, 50, fromX, 0.1f, "From X:", positionsLayout);
 	fromY_ = addSlider(-50, 50, fromY, 0.1f, "From Y:", positionsLayout);
 	size_ = addSlider(1, 2000, sizeX, 1, "Size X:", positionsLayout);
 	maxIters_ = addSlider(1, 800, (float)maxIters, 1, "Max Iterations:", positionsLayout);
@@ -77,6 +79,9 @@ void SlidersGroup::connectSignals()
 	connect(size_, &QSlider::valueChanged, this, &SlidersGroup::onSizeChanged);
 	connect(maxIters_, &QSlider::valueChanged, this, &SlidersGroup::onMaxItersChanged);
 
+    connect(THRESHOLD1_, &QSlider::valueChanged, this, &SlidersGroup::onTHRESHOLD1Changed);
+    connect(THRESHOLD2_, &QSlider::valueChanged, this, &SlidersGroup::onTHRESHOLD2Changed);
+
 	connect(brightness_, &QSlider::valueChanged, this, &SlidersGroup::onBrightnessChanged);
 	connect(contrast_, &QSlider::valueChanged, this, &SlidersGroup::onContrastChanged);
 	connect(colorA_, &QPushButton::clicked, this, &SlidersGroup::onColorAButtonClicked);
@@ -120,6 +125,18 @@ void SlidersGroup::onContrastChanged(int value)
 {
 	contrast = (float)value * 0.1f;
 	emit contrastChanged(value);
+}
+
+void SlidersGroup::onTHRESHOLD1Changed(int value)
+{
+	THRESHOLD1 = (float)value;
+	emit THRESHOLD1Changed(value);
+}
+
+void SlidersGroup::onTHRESHOLD2Changed(int value)
+{
+	THRESHOLD2 = (float)value;
+	emit THRESHOLD2Changed(value);
 }
 
 void SlidersGroup::onColorButtonClicked(QPushButton * button, QVector3D& color, const QString& title)

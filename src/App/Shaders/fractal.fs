@@ -12,6 +12,9 @@ uniform float sizeY;
 uniform int maxIters;
 uniform bool isSmoothing;
 
+uniform float THRESHOLD1;
+uniform float THRESHOLD2;
+
 uniform vec3 colorA = vec3(0.5, 0.5, 0.5);
 uniform vec3 colorB = vec3(0.5, 0.5, 0.5);
 uniform vec3 colorC = vec3(1.0, 1.0, 1.0);
@@ -21,8 +24,6 @@ uniform float contrast;
 
 float mandelbrot_one_iter(vec2 coord)
 {
-    const float THRESHOLD1 = 256.0f;
-    const float THRESHOLD2 = 65536.0f;
 
     float x0 = fromX + (coord.x + 0.5f) * sizeX / width;
     float y0 = fromY + (coord.y + 0.5f) * sizeY / height;
