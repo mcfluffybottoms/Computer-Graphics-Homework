@@ -34,13 +34,15 @@ jobs:
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           }
           - {
-            name: "Windows Latest MinGW", artifact: "Windows-MinGW.tar.xz",
-            os: windows-latest,
+            name: "Windows-2022 MinGW", artifact: "Windows-MinGW.tar.xz",
+            os: windows-2022,
             build_type: "Release", cc: "gcc", cxx: "g++"
           }
     steps:
       - uses: actions/checkout@v5
-      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Setup MSVC env
+        if: contains(matrix.config.name, 'MSVC')
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Download Ninja and CMake
         id: cmake_and_ninja
