@@ -3,15 +3,20 @@ set(SRCS
     Window.cpp
     Window.h
 
-    Shaders/diffuse.fs
-    Shaders/diffuse.vs
+    Camera.cpp
+    Camera.h
+
+    SliderGroup.cpp
+    SliderGroup.h
+    
+    Shaders/fractal.fs
+    Shaders/fractal.vs
     Textures/voronoi.png
 
     resources.qrc
 )
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
-
 add_executable(demo-app ${SRCS})
 
 target_link_libraries(demo-app
