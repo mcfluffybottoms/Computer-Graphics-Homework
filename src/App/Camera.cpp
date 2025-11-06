@@ -1,5 +1,4 @@
 #include "Camera.h"
-#include <GL/glew.h>
 #include <cmath>
 #include <qvector4d.h>
 
