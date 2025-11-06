@@ -29,7 +29,7 @@ jobs:
           }
           - {
             name: "Windows Latest MSVC", artifact: "Windows-MSVC.tar.xz",
-            os: windows-latest,
+            os: windows-2022,
             build_type: "Release", cc: "cl", cxx: "cl",
             environment_script: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/Auxiliary/Build/vcvars64.bat"
           }
@@ -111,12 +111,6 @@ jobs:
           cached: ${{ steps.cache.outputs.cache-hit }}
           arch: 'win64_mingw81'
           version: '5.15.*'
-
-      - name: Add MinGW to PATH
-        if: contains(matrix.config.name, 'MinGW')
-        run: |
-          echo "Adding MinGW to PATH"
-          echo "${{ env.QT_ROOT_DIR }}/Tools/mingw81_64/bin" >> $GITHUB_PATH
 
       - name: Install Qt
         if: "!contains(matrix.config.name, 'MinGW')"
