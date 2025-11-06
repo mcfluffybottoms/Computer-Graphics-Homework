@@ -2,7 +2,6 @@
 
 #include <Base/GLWidget.hpp>
 
-#include <GL/gl.h>
 #include <QElapsedTimer>
 #include <QMatrix4x4>
 #include <QOpenGLBuffer>
