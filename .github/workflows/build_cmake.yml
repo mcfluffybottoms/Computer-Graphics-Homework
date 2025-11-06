@@ -8,9 +8,6 @@ env:
   BUILD_TYPE: Release
   CCACHE_VERSION: 3.7.7
 
-pool:
-  vmImage: 'windows-2022'
-
 jobs:
   build:
     name: ${{matrix.config.name}}
@@ -43,7 +40,9 @@ jobs:
           }
     steps:
       - uses: actions/checkout@v5
-      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Setup MSVC env
+        if: contains(matrix.config.name, 'MSVC')
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Download Ninja and CMake
         id: cmake_and_ninja
