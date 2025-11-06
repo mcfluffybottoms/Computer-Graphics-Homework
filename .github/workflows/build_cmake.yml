@@ -110,6 +110,13 @@ jobs:
           arch: 'win64_mingw81'
           version: '5.15.*'
 
+      - name: Setup MinGW PATH (Qt MinGW)
+        if: "contains(matrix.config.name, 'MinGW')"
+        run: |
+          echo "::add-path::${{ env.Qt5_DIR }}/../../../Tools/mingw81_64/bin"
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
+
       - name: Install Qt
         if: "!contains(matrix.config.name, 'MinGW')"
         uses: jurplel/install-qt-action@v4
