@@ -1,13 +1,16 @@
 #include "Window.h"
 
-#include <QMouseEvent>
 #include <QLabel>
+#include <QMouseEvent>
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
-#include <QVBoxLayout>
 #include <QScreen>
+#include <QVBoxLayout>
+
 
 #include <array>
+#include <qboxlayout.h>
+#include <qmatrix4x4.h>
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -18,14 +21,82 @@
 namespace
 {
 
-constexpr std::array<GLfloat, 21u> vertices = {
-	0.0f, 0.707f, 1.f, 0.f, 0.f, 0.0f, 0.0f,
-	-0.5f, -0.5f, 0.f, 1.f, 0.f, 0.5f, 1.0f,
-	0.5f, -0.5f, 0.f, 0.f, 1.f, 1.0f, 0.0f,
+const std::array<GLfloat, 12> vertices = {
+	-5.f,
+	-5.f,
+	5.f,
+	-5.f,
+	5.f,
+	5.f,
+	-5.f,
+	5.f,
 };
-constexpr std::array<GLuint, 3u> indices = {0, 1, 2};
+const std::array<GLuint, 6> indices = {0, 1, 2, 2, 3, 0};
 
 }// namespace
+
+void Window::changeCameraPerspective(float width, float height)
+{
+	const float aspect = float(height) / float(width);
+	const float left = -1.0f;
+	const float right = 1.0f;
+	const float top = 1.0f * aspect;
+	const float bottom = -1.0f * aspect;
+	const float nearPlane = 0.1f;
+	const float farPlane = 100.0f;
+	camera->setToOrthographic(left, right, bottom, top, nearPlane, farPlane);
+}
+
+void Window::setupSliders(QVBoxLayout * layout)
+{
+	slidersGroup_ = new SlidersGroup("Fractal Parameters");
+	layout->addWidget(slidersGroup_, 1);
+}
+
+void Window::initUniformValues()
+{
+	// Uniform values for shader
+	mvpUniform_ = program_->uniformLocation("mvp");
+	widthUniform_ = program_->uniformLocation("width");
+	heightUniform_ = program_->uniformLocation("height");
+	fromXUniform_ = program_->uniformLocation("fromX");
+	fromYUniform_ = program_->uniformLocation("fromY");
+	sizeXUniform_ = program_->uniformLocation("sizeX");
+	sizeYUniform_ = program_->uniformLocation("sizeY");
+	maxItersUniform_ = program_->uniformLocation("maxIters");
+	THRESHOLD1Uniform_ = program_->uniformLocation("THRESHOLD1");
+	THRESHOLD2Uniform_ = program_->uniformLocation("THRESHOLD2");
+	isSmoothingUniform_ = program_->uniformLocation("isSmoothing");
+	brightnessUniform_ = program_->uniformLocation("brightness");
+	contrastUniform_ = program_->uniformLocation("contrast");
+	AUniform_ = program_->uniformLocation("colorA");
+	BUniform_ = program_->uniformLocation("colorB");
+	CUniform_ = program_->uniformLocation("colorC");
+	DUniform_ = program_->uniformLocation("colorD");
+}
+
+void Window::setUniformValues(const QMatrix4x4& mvp)
+{
+	program_->setUniformValue(mvpUniform_, mvp);
+	// positions
+	program_->setUniformValue(widthUniform_, slidersGroup_->wid);
+	program_->setUniformValue(heightUniform_, slidersGroup_->hei);
+	program_->setUniformValue(fromXUniform_, slidersGroup_->fromX);
+	program_->setUniformValue(fromYUniform_, slidersGroup_->fromY);
+	program_->setUniformValue(sizeXUniform_, slidersGroup_->sizeX);
+	program_->setUniformValue(sizeYUniform_, slidersGroup_->sizeY);
+	program_->setUniformValue(maxItersUniform_, slidersGroup_->maxIters);
+	program_->setUniformValue(isSmoothingUniform_, slidersGroup_->isSmoothing);
+	program_->setUniformValue(THRESHOLD1Uniform_, slidersGroup_->THRESHOLD1);
+	program_->setUniformValue(THRESHOLD2Uniform_, slidersGroup_->THRESHOLD2);
+	// colors
+	program_->setUniformValue(brightnessUniform_, slidersGroup_->brightness);
+	program_->setUniformValue(contrastUniform_, slidersGroup_->contrast);
+	program_->setUniformValue(AUniform_, slidersGroup_->colorA);
+	program_->setUniformValue(BUniform_, slidersGroup_->colorB);
+	program_->setUniformValue(CUniform_, slidersGroup_->colorC);
+	program_->setUniformValue(DUniform_, slidersGroup_->colorD);
+}
 
 Window::Window() noexcept
 {
@@ -38,7 +109,7 @@ Window::Window() noexcept
 
 	auto layout = new QVBoxLayout();
 	layout->addWidget(fps, 1);
-
+	setupSliders(layout);
 	setLayout(layout);
 
 	timer_.start();
@@ -46,6 +117,9 @@ Window::Window() noexcept
 	connect(this, &Window::updateUI, [=] {
 		fps->setText(formatFPS(ui_.fps));
 	});
+
+	setFixedWidth(1000);
+	setFixedHeight(1000);
 }
 
 Window::~Window()
@@ -53,8 +127,9 @@ Window::~Window()
 	{
 		// Free resources with context bounded.
 		const auto guard = bindContext();
-		texture_.reset();
 		program_.reset();
+		if (camera)
+			delete camera;
 	}
 }
 
@@ -62,11 +137,10 @@ void Window::onInit()
 {
 	// Configure shaders
 	program_ = std::make_unique<QOpenGLShaderProgram>(this);
-	program_->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/diffuse.vs");
-	program_->addShaderFromSourceFile(QOpenGLShader::Fragment,
-									  ":/Shaders/diffuse.fs");
+	program_->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/fractal.vs");
+	program_->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment,
+											   ":/Shaders/fractal.fs");
 	program_->link();
-
 	// Create VAO object
 	vao_.create();
 	vao_.bind();
@@ -83,25 +157,18 @@ void Window::onInit()
 	ibo_.setUsagePattern(QOpenGLBuffer::StaticDraw);
 	ibo_.allocate(indices.data(), static_cast<int>(indices.size() * sizeof(GLuint)));
 
-	texture_ = std::make_unique<QOpenGLTexture>(QImage(":/Textures/voronoi.png"));
-	texture_->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
-	texture_->setWrapMode(QOpenGLTexture::WrapMode::Repeat);
-
 	// Bind attributes
 	program_->bind();
 
 	program_->enableAttributeArray(0);
-	program_->setAttributeBuffer(0, GL_FLOAT, 0, 2, static_cast<int>(7 * sizeof(GLfloat)));
+	program_->setAttributeBuffer(0, GL_FLOAT, 0, 2, static_cast<int>(2 * sizeof(GLfloat)));
 
-	program_->enableAttributeArray(1);
-	program_->setAttributeBuffer(1, GL_FLOAT, static_cast<int>(2 * sizeof(GLfloat)), 3,
-								 static_cast<int>(7 * sizeof(GLfloat)));
+	// Uniform values for shader
+	initUniformValues();
 
-	program_->enableAttributeArray(2);
-	program_->setAttributeBuffer(2, GL_FLOAT, static_cast<int>(5 * sizeof(GLfloat)), 2,
-								 static_cast<int>(7 * sizeof(GLfloat)));
-
-	mvpUniform_ = program_->uniformLocation("mvp");
+	// Camera
+	camera = new Camera();
+	changeCameraPerspective((float)width(), (float)height());
 
 	// Release all
 	program_->release();
@@ -129,25 +196,17 @@ void Window::onRender()
 	// Calculate MVP matrix
 	model_.setToIdentity();
 	model_.translate(0, 0, -2);
-	view_.setToIdentity();
-	const auto mvp = projection_ * view_ * model_;
-
+	const auto mvp = camera->getProjection() * camera->getView() * model_;
 	// Bind VAO and shader program
 	program_->bind();
 	vao_.bind();
 
 	// Update uniform value
-	program_->setUniformValue(mvpUniform_, mvp);
+	setUniformValues(mvp);
 
-	// Activate texture unit and bind texture
-	glActiveTexture(GL_TEXTURE0);
-	texture_->bind();
-
-	// Draw
-	glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, nullptr);
+	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
 	// Release VAO and shader program
-	texture_->release();
 	vao_.release();
 	program_->release();
 
@@ -166,16 +225,14 @@ void Window::onResize(const size_t width, const size_t height)
 	glViewport(0, 0, static_cast<GLint>(width), static_cast<GLint>(height));
 
 	// Configure matrix
-	const auto aspect = static_cast<float>(width) / static_cast<float>(height);
-	const auto zNear = 0.1f;
-	const auto zFar = 100.0f;
-	const auto fov = 60.0f;
-	projection_.setToIdentity();
-	projection_.perspective(fov, aspect, zNear, zFar);
+	if (camera)
+	{
+		changeCameraPerspective((float)width, (float)height);
+	}
 }
 
 Window::PerfomanceMetricsGuard::PerfomanceMetricsGuard(std::function<void()> callback)
-	: callback_{ std::move(callback) }
+	: callback_{std::move(callback)}
 {
 }
 
@@ -198,6 +255,52 @@ auto Window::captureMetrics() -> PerfomanceMetricsGuard
 				frameCount_ = 0;
 				emit updateUI();
 			}
-		}
-	};
+		}};
 }
+
+void Window::mousePressEvent(QMouseEvent * event)
+{
+	if (camera && event->button() == Qt::LeftButton)
+	{
+		camera->startDrag((float)event->pos().x(), (float)event->pos().y());
+	}
+	fgl::GLWidget::mousePressEvent(event);
+}
+
+void Window::mouseMoveEvent(QMouseEvent * event)
+{
+	if (!camera)
+		return;
+
+	if (event->buttons() & Qt::LeftButton)
+	{
+		const qreal dpr = devicePixelRatio();
+		camera->dragMove((float)event->pos().x(), (float)event->pos().y(), (float)QWidget::width(), (float)QWidget::height(), (float)dpr);
+	}
+
+	fgl::GLWidget::mouseMoveEvent(event);
+}
+
+void Window::mouseReleaseEvent(QMouseEvent * event)
+{
+	if (camera && event->button() == Qt::RightButton)
+	{
+		camera->endDrag();
+	}
+	fgl::GLWidget::mouseReleaseEvent(event);
+}
+
+#if QT_CONFIG(wheelevent)
+void Window::wheelEvent(QWheelEvent * event)
+{
+	if (!camera)
+	{
+		fgl::GLWidget::wheelEvent(event);
+		return;
+	}
+	float delta = (float)event->angleDelta().y() / 120.0f;
+	const qreal dpr = devicePixelRatio();
+	camera->zoom((float)event->position().x(), (float)event->position().y(), delta, (float)QWidget::width(), (float)QWidget::height(), dpr);
+	fgl::GLWidget::wheelEvent(event);
+}
+#endif
