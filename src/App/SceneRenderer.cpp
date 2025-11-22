@@ -85,3 +85,13 @@ bool SceneRenderer::onResize(fgl::GLWidget * window)
 	context_->functions()->glViewport(0, 0, static_cast<GLint>(width), static_cast<GLint>(height));
 	return true;
 }
+
+void SceneRenderer::rotateObj(const QVector2D& delta) {
+
+    float sensitivity = 0.05f;
+    QVector3D rotation = entityModel->getRotation();
+    rotation.setY(rotation.y() + delta.x() * sensitivity);
+    rotation.setX(rotation.x() + delta.y() * sensitivity);
+
+    entityModel->setRotation(rotation);
+}

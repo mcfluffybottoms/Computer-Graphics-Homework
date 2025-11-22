@@ -22,14 +22,13 @@ struct SceneRenderer {
 	bool setShaders();
     void setUniformValues(const QMatrix4x4 & mvp);
 
+	void rotateObj(const QVector2D& rotation);
+
 private:
 	OpenGLContextPtr context_;
 
 	void initUniformValues();
 
-	// std::vector<QOpenGLBuffer> vbos_;
-	// std::vector<QOpenGLBuffer> ibos_;
-	// std::vector<QOpenGLVertexArrayObject> vaos_;
 	std::shared_ptr<QOpenGLShaderProgram> program_;
 
 	EntityModel * entityModel = nullptr;

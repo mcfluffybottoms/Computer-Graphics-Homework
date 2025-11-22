@@ -149,9 +149,9 @@ void Camera::move(const QVector2D & moveBy)
 
 void Camera::rotate(const QVector2D & rotateBy)
 {
-	yaw_ += rotateBy.x();
-	pitch_ += rotateBy.y();
-
+	yaw_ += rotateBy.x() * 0.2f;
+	pitch_ += rotateBy.y() * 0.2f;
+	pitch_ = std::clamp(pitch_, -89.0f, 89.0f);
 	updateCameraVectors();
 	updateView();
 }

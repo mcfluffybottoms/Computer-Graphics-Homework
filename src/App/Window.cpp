@@ -13,6 +13,7 @@
 #include <array>
 #include <qboxlayout.h>
 #include <qmatrix4x4.h>
+#include <qnamespace.h>
 #include <qopenglcontext.h>
 
 #define TINYGLTF_IMPLEMENTATION
@@ -78,12 +79,15 @@ Window::~Window()
 void Window::onInit()
 {
 	// Configure shaders
-	auto *f = QOpenGLContext::currentContext()->functions();
-	if (f) {
-        f->initializeOpenGLFunctions();
-    } else {
-        qWarning() << "No functions() on context_!";
-    }
+	auto * f = QOpenGLContext::currentContext()->functions();
+	if (f)
+	{
+		f->initializeOpenGLFunctions();
+	}
+	else
+	{
+		qWarning() << "No functions() on context_!";
+	}
 	sceneRenderer = new SceneRenderer(std::make_shared<OpenGLContext>(f));
 	sceneRenderer->onInit(this);
 	// Camera
@@ -151,17 +155,25 @@ auto Window::captureMetrics() -> PerfomanceMetricsGuard
 		}};
 }
 
-void Window::mousePressEvent(QMouseEvent * event) {
+void Window::mousePressEvent(QMouseEvent * event)
+{
 	lastMousePos_ = {static_cast<float>(event->pos().x()), static_cast<float>(event->pos().y())};
-} 
+}
 
 void Window::mouseMoveEvent(QMouseEvent * event)
 {
-	if (camera && event->buttons() && Qt::LeftButton)
+	if (camera && (event->buttons() & Qt::LeftButton))
 	{
 		QVector2D result = inputManager->processMouseInput(event, lastMousePos_);
 		camera->rotate(result);
 		lastMousePos_ = {static_cast<float>(event->pos().x()), static_cast<float>(event->pos().y())};
+	}
+
+	if (camera && (event->buttons() & Qt::RightButton))
+	{
+		QVector2D delta = inputManager->processMouseInput(event, lastMousePos_);
+
+		sceneRenderer->rotateObj(delta);
 	}
 
 	fgl::GLWidget::mouseMoveEvent(event);
@@ -180,18 +192,22 @@ void Window::wheelEvent(QWheelEvent * event)
 }
 #endif
 
-void Window::keyPressEvent(QKeyEvent * event) {
+void Window::keyPressEvent(QKeyEvent * event)
+{
 	keyboardInput.insert(event->key());
 	fgl::GLWidget::keyReleaseEvent(event);
 }
 
-void Window::keyReleaseEvent(QKeyEvent * event) {
+void Window::keyReleaseEvent(QKeyEvent * event)
+{
 	keyboardInput.remove(event->key());
 	fgl::GLWidget::keyReleaseEvent(event);
 }
 
-void Window::processKeyboardInput() {
-	if(!keyboardInput.empty()) {
+void Window::processKeyboardInput()
+{
+	if (!keyboardInput.empty())
+	{
 		QVector2D moveBy = inputManager->processKeyboardInput(keyboardInput, 0.001);
 		camera->move(moveBy);
 	}
