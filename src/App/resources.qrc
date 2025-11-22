@@ -6,7 +6,7 @@
         <file>Textures/voronoi.png</file>
     </qresource>
     <qresource prefix="/">
-        <file>Shaders/fractal.fs</file>
-        <file>Shaders/fractal.vs</file>
+        <file>Shaders/diffuse.fs</file>
+        <file>Shaders/diffuse.vs</file>
     </qresource>
 </RCC>

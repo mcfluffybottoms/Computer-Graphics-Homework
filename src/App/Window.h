@@ -11,6 +11,8 @@
 
 #include "Camera.h"
 #include "SliderGroup.h"
+#include "ResourceManager.h"
+#include "InputManager.h"
 
 #include <functional>
 #include <memory>
@@ -28,9 +30,9 @@ public: // fgl::GLWidget
 	void onResize(size_t width, size_t height) override;
 
 protected:
-	void mousePressEvent(QMouseEvent * event) override;
+	void keyPressEvent(QKeyEvent * event) override;
+	void keyReleaseEvent(QKeyEvent * event) override;
 	void mouseMoveEvent(QMouseEvent * event) override;
-	void mouseReleaseEvent(QMouseEvent* event) override;
 	#if QT_CONFIG(wheelevent)
 		void wheelEvent(QWheelEvent *event) override;
 	#endif
@@ -63,6 +65,9 @@ private:
 	void initUniformValues();
 	void setUniformValues(const QMatrix4x4& mvp);
 
+	void processKeyboardInput();
+	QSet<int> keyboardInput;
+
 	// boxes
     SlidersGroup* slidersGroup_ = nullptr;
 
@@ -94,6 +99,8 @@ private:
 	// navigation
 	QMatrix4x4 model_;
 	Camera* camera = nullptr;
+	InputManager* inputManager = nullptr;
+	ResourceManager* resourceManager = nullptr;
 
 	// count fps
 	QElapsedTimer timer_;

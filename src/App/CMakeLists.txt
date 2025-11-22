@@ -6,11 +6,19 @@ set(SRCS
     Camera.cpp
     Camera.h
 
+    ResourceManager.cpp
+    ResourceManager.h
+
+    InputManager.cpp
+    InputManager.h
+
+    Resources.h
+
     SliderGroup.cpp
     SliderGroup.h
     
-    Shaders/fractal.fs
-    Shaders/fractal.vs
+    Shaders/diffuse.fs
+    Shaders/diffuse.vs
     Textures/voronoi.png
 
     resources.qrc
@@ -24,4 +32,5 @@ target_link_libraries(demo-app
         Qt5::Widgets
         FGL::Base
         thirdparty::tinygltf
+        
 )

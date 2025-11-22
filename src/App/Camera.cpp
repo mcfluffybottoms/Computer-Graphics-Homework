@@ -19,25 +19,11 @@ Camera::Camera()
 
 void Camera::setToPerspective(float fov, float aspect, float nearPlane, float farPlane)
 {
-	view_type = VIEW_TYPE::PERSPECTIVE;
 	projection_.setToIdentity();
 	fov_ = fov;
 	nearPlane_ = nearPlane;
 	farPlane_ = farPlane;
 	projection_.perspective(fov, aspect, nearPlane, farPlane);
-}
-
-void Camera::setToOrthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane)
-{
-	view_type = VIEW_TYPE::ORTHOGRAPHIC;
-	projection_.setToIdentity();
-	left_ = left;
-	right_ = right;
-	top_ = top;
-	bottom_ = bottom;
-	nearPlane_ = nearPlane;
-	farPlane_ = farPlane;
-	projection_.ortho(left, right, bottom, top, nearPlane, farPlane);
 }
 
 void Camera::setProjection(const QMatrix4x4 & p)
@@ -109,6 +95,22 @@ QVector3D Camera::z() const
 	return z_;
 }
 
+float & Camera::yaw()
+{
+	if(if_need_to_recalc_view) {
+		updateCameraVectors();
+	}
+	return yaw_;
+}
+
+float & Camera::pitch()
+{
+	if(if_need_to_recalc_view) {
+		updateCameraVectors();
+	}
+	return pitch_;
+}
+
 // proccessing movement
 QVector3D Camera::getWorldCoord(float screenX, float screenY, float width, float height, float distance)
 {
@@ -116,73 +118,38 @@ QVector3D Camera::getWorldCoord(float screenX, float screenY, float width, float
 	float ny = 1.0f - 2.0f * screenY / height;
 	float X_NDC;
 	float Y_NDC;
-	if (view_type == VIEW_TYPE::PERSPECTIVE)
-	{
-		X_NDC = 2.0f * distance / projection_(0, 0);
-		Y_NDC = 2.0f * distance / projection_(1, 1);
-		float wx = nx * X_NDC + position_.x();
-		float wy = ny * Y_NDC + position_.y();
-		float wz = position_.z() - distance;
-		return QVector3D(wx, wy, wz);
-	}
-	else
-	{
-		float right = 2.0f / projection_(0, 0);
-		float top = 2.0f / projection_(1, 1);
-		float vx = nx * (right / 2.0f);
-		float vy = ny * (top / 2.0f);
-		float vz = -distance;
-		QMatrix4x4 viewMatrix = getView();
-		QMatrix4x4 inverseView = viewMatrix.inverted();
-		return inverseView * QVector3D(vx, vy, vz);
-	}
+	X_NDC = 2.0f * distance / projection_(0, 0);
+	Y_NDC = 2.0f * distance / projection_(1, 1);
+	float wx = nx * X_NDC + position_.x();
+	float wy = ny * Y_NDC + position_.y();
+	float wz = position_.z() - distance;
+	return QVector3D(wx, wy, wz);
 }
 
-void Camera::zoom(float mousePosX, float mousePosY, float distance, float width, float height, float dpr)
+void Camera::zoom(const QVector3D & mouseData, float width, float height, float dpr)
 {
-	QVector3D before = getWorldCoord(mousePosX, mousePosY, width, height, distance);
-	if (view_type == VIEW_TYPE::PERSPECTIVE)
-	{
-		fov_ = fov_ * std::pow(1.1f, -distance);
-		setToPerspective(fov_, width / height, nearPlane_, farPlane_);
-	}
-	else
-	{
-		float zoomFactor = std::pow(1.1f, -distance);
-		left_ *= zoomFactor;
-		right_ *= zoomFactor;
-		bottom_ *= zoomFactor;
-		top_ *= zoomFactor;
-		setToPerspective(fov_, width / height, nearPlane_, farPlane_);
-		setToOrthographic(left_, right_, bottom_, top_, nearPlane_, farPlane_);
-	}
-	QVector3D after = getWorldCoord(mousePosX, mousePosY, width, height, distance);
+
+	QVector3D before = getWorldCoord(mouseData.x(), mouseData.y(), width, height, mouseData.z());
+	fov_ = fov_ * std::pow(1.1f, -mouseData.z());
+	setToPerspective(fov_, width / height, nearPlane_, farPlane_);
+	QVector3D after = getWorldCoord(mouseData.x(), mouseData.y(), width, height, mouseData.z());
 	QVector3D delta = before - after;
 	position_ += delta;
 	updateCameraVectors();
 }
 
-void Camera::startDrag(float mousePosX, float mousePosY)
+void Camera::move(const QVector2D & moveBy)
 {
-	isDragging_ = true;
-	lastMousePos_ = QVector2D(mousePosX, mousePosY);
-	dragStartPosition_ = position_;
+	position_.setX(position_.x() + moveBy.x() * moveSpeed_);
+	position_.setY(position_.y() + moveBy.y() * moveSpeed_);
+	if_need_to_recalc_view = true;
 }
 
-void Camera::dragMove(float mousePosX, float mousePosY, float width, float height, float dpr)
+void Camera::rotate(const QVector2D & rotateBy)
 {
-	if (!isDragging_)
-		return;
-	QVector3D currentWorld = getWorldCoord(mousePosX, mousePosY, width, height, 1);
-	QVector3D startWorld = getWorldCoord(lastMousePos_.x(), lastMousePos_.y(), width, height, 1);
-	QVector3D delta = startWorld - currentWorld;
-	position_ = dragStartPosition_ + dpr * delta;
+	yaw_ += rotateBy.x();
+	pitch_ += rotateBy.y();
 	updateCameraVectors();
-}
-
-void Camera::endDrag()
-{
-	isDragging_ = false;
 }
 
 void Camera::updateCameraVectors()
