@@ -1,16 +1,21 @@
 #version 330 core
 
-layout(location=0) in vec2 pos;
-layout(location=1) in vec3 col;
-layout(location=2) in vec2 tex;
+layout(location=0) in vec3 position;
+layout(location=1) in vec3 normal;
+layout(location=2) in vec2 texCoords;
 
 uniform mat4 mvp;
+uniform mat4 model;
+uniform mat4 normalMatrix;
 
-out vec3 vert_col;
-out vec2 vert_tex;
+out vec3 fragPos;
+out vec3 fragNormal;
+out vec2 fragTexCoord;
 
 void main() {
-	vert_col = col;
-	vert_tex = tex;
-	gl_Position = mvp * vec4(pos.xy, 0.0, 1.0);
+    fragPos = vec3(model * vec4(position, 1.0));
+    fragNormal = mat3(normalMatrix) * normal;
+    fragTexCoord = texCoords;
+
+    gl_Position = mvp * vec4(position, 1.0);
 }

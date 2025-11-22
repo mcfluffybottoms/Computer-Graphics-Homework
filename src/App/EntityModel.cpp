@@ -1,18 +1,20 @@
-#include "ResourceManager.h"
+#include "EntityModel.h"
 #include "App/Resources.h"
 #include <QFile>
 #include <iostream>
+#include <qimage.h>
 #include <tinygltf/tiny_gltf.h>
 
-ResourceManager::ResourceManager() {}
+EntityModel::EntityModel(std::shared_ptr<QOpenGLShaderProgram>  program) : program_(program) {}
 
-ResourceManager::~ResourceManager()
+EntityModel::~EntityModel()
 {
+	program_.reset();
 	if (importedModel)
 		delete importedModel;
 }
 
-bool ResourceManager::setImportedModel(const QString & source)
+bool EntityModel::setImportedModel(const QString & source)
 {
 	Model * model = getMesh(source);
 	if (!model)
@@ -21,15 +23,20 @@ bool ResourceManager::setImportedModel(const QString & source)
 		return false;
 	}
 	importedModel = model;
+	loadBuffers();
 	return true;
 }
 
-Model * ResourceManager::getMesh(const QString & source)
+Model* EntityModel::getImportedModel() {
+	return importedModel;
+}
+
+Model * EntityModel::getMesh(const QString & source)
 {
 	QFile modelFile(source);
 	if (!modelFile.open(QIODevice::ReadOnly))
 	{
-		std::cerr << "ResourceManager::getMesh: " << "File was not opened." << std::endl;
+		std::cerr << "EntityModel::getMesh: " << "File was not opened." << std::endl;
 		return nullptr;
 	}
 
@@ -38,7 +45,7 @@ Model * ResourceManager::getMesh(const QString & source)
 
 	if (modelData.isEmpty())
 	{
-		std::cerr << "ResourceManager::getMesh: " << "No data in file." << std::endl;
+		std::cerr << "EntityModel::getMesh: " << "No data in file." << std::endl;
 		return nullptr;
 	}
 
@@ -52,18 +59,19 @@ Model * ResourceManager::getMesh(const QString & source)
 
 	if (!success)
 	{
-		std::cerr << "ResourceManager::getMesh: " << warning << "; " << err << std::endl;
+		std::cerr << "EntityModel::getMesh: " << warning << "; " << err << std::endl;
 		return nullptr;
 	}
 
 	auto textures = loadTextures(model);
+	//auto textures = std::vector<std::unique_ptr<QOpenGLTexture>>();
 	auto meshes = loadMeshes(model);
 	Model * endModel = new Model{std::move(meshes), std::move(textures)};
 
 	return endModel;
 }
 
-std::vector<std::unique_ptr<QOpenGLTexture>> ResourceManager::loadTextures(const tinygltf::Model & model)
+std::vector<std::unique_ptr<QOpenGLTexture>> EntityModel::loadTextures(const tinygltf::Model & model)
 {
 	std::vector<std::unique_ptr<QOpenGLTexture>> textures_;
 	for (const auto & texture: model.textures)
@@ -88,6 +96,8 @@ std::vector<std::unique_ptr<QOpenGLTexture>> ResourceManager::loadTextures(const
 			else if (image.component == 4)
 			{
 				fmt = QImage::Format_RGBA8888;
+			} else {
+				fmt = QImage::Format_Invalid;
 			}
 			QImage qimg = QImage(image.image.data(), image.width, image.height, fmt);
 
@@ -102,18 +112,20 @@ std::vector<std::unique_ptr<QOpenGLTexture>> ResourceManager::loadTextures(const
 	return textures_;
 }
 
-std::vector<ModelMesh> ResourceManager::loadMeshes(const tinygltf::Model & model)
+std::vector<ModelMesh> EntityModel::loadMeshes(const tinygltf::Model & model)
 {
 	std::vector<ModelMesh> meshes_;
 	for (const auto & mesh: model.meshes)
 	{
+		std::cout << mesh.name << "\n";
 		for (const auto & primitive: mesh.primitives)
 		{
 			ModelMesh meshData;
-
+			// std::cout << primitive.indices << "\n";
 			// filling vertices
 			for (const auto & attributeName: {"POSITION", "NORMAL", "TEXCOORD_0"})
 			{
+				if(primitive.attributes.count(attributeName) == 0) continue;
 				const auto & accessor = model.accessors[primitive.attributes.at(attributeName)];
 				const auto & bufferView = model.bufferViews[accessor.bufferView];
 				const auto & buffer = model.buffers[bufferView.buffer];
@@ -121,7 +133,7 @@ std::vector<ModelMesh> ResourceManager::loadMeshes(const tinygltf::Model & model
 				const float * values = reinterpret_cast<const float *>(
 					&buffer.data[bufferView.byteOffset + accessor.byteOffset]);
 
-				meshData.vertices.resize(accessor.count);
+				if(accessor.count > meshData.vertices.size()) meshData.vertices.resize(accessor.count);
 				if (strcmp(attributeName, "POSITION") == 0)
 				{
 					for (size_t i = 0; i < accessor.count; ++i)
@@ -192,4 +204,113 @@ std::vector<ModelMesh> ResourceManager::loadMeshes(const tinygltf::Model & model
 		}
 	}
 	return meshes_;
+}
+
+bool EntityModel::loadBuffers() {
+	if(!importedModel) return false;
+	for(const auto& mesh : importedModel->mesh) {
+		auto vbo_ = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::Type::VertexBuffer);
+		auto ibo_ = std::make_unique<QOpenGLBuffer>(QOpenGLBuffer::Type::IndexBuffer);
+		auto vao_ = std::make_unique<QOpenGLVertexArrayObject>();
+		std::unique_ptr<QOpenGLTexture> texture_;
+
+		// Create VAO object
+		vao_->create();
+		vao_->bind();
+
+		// Create VBO
+		vbo_->create();
+		vbo_->bind();
+		vbo_->setUsagePattern(QOpenGLBuffer::StaticDraw);
+		vbo_->allocate(mesh.vertices.data(), static_cast<int>(mesh.vertices.size() * sizeof(Vertex)));
+
+		// Create IBO
+		ibo_->create();
+		ibo_->bind();
+		ibo_->setUsagePattern(QOpenGLBuffer::StaticDraw);
+		ibo_->allocate(mesh.indices.data(), static_cast<int>(mesh.indices.size() * sizeof(uint32_t)));
+
+		// texture
+		texture_ = std::make_unique<QOpenGLTexture>(QImage(":/Textures/voronoi.png"));
+		texture_->setMinMagFilters(QOpenGLTexture::Linear, QOpenGLTexture::Linear);
+		texture_->setWrapMode(QOpenGLTexture::WrapMode::Repeat);
+
+		// Bind attributes
+		program_->bind();
+
+		program_->enableAttributeArray(0);
+		program_->setAttributeBuffer(0, GL_FLOAT, offsetof(Vertex, position), 3, sizeof(Vertex));
+
+		program_->enableAttributeArray(1);
+		program_->setAttributeBuffer(1, GL_FLOAT, offsetof(Vertex, normal), 3, sizeof(Vertex));
+
+		program_->enableAttributeArray(2);
+		program_->setAttributeBuffer(2, GL_FLOAT, offsetof(Vertex, texCoords), 2, sizeof(Vertex));
+
+		// Release all
+		program_->release();
+
+		//ibo_.release();
+		//vbo_.release();
+		//vao_.release();
+
+		vaos_.push_back(std::move(vao_));
+		vbos_.push_back(std::move(vbo_));
+		ibos_.push_back(std::move(ibo_));
+
+	}
+	qDebug() << "Model has" << importedModel->mesh.size() << "meshes";
+	qDebug() << "VAOs:" << vaos_.size();
+	qDebug() << "VBOs:" << vbos_.size();
+	qDebug() << "IBOs:" << ibos_.size();
+	qDebug() << "Textures:" << importedModel->texture.size();
+	
+	for (size_t i = 0; i < importedModel->mesh.size(); ++i) {
+		const auto& mesh = importedModel->mesh[i];
+		qDebug() << "Mesh" << i << ":" << mesh.vertices.size() << "vertices," 
+				<< mesh.indices.size() << "indices, texture index:" << mesh.textureIndex;
+		qDebug() << "  VAO valid:" << (i < vaos_.size() && vaos_[i] && vaos_[i]->isCreated());
+	}
+	return true;
+}
+
+bool EntityModel::render(const QMatrix4x4 & mvp, OpenGLContextPtr context) {
+	const auto & transform = getTransform();
+	const auto mvp_ = mvp * transform;
+	
+	if (mvpUniform_ >= 0)
+		program_->setUniformValue(mvpUniform_, mvp_);
+	if (modelUniform_ >= 0)
+		program_->setUniformValue(modelUniform_, transform);
+	if (normalMatrixUniform_ >= 0)
+		program_->setUniformValue(normalMatrixUniform_, transform.normalMatrix());
+
+	for (size_t i = 0; i < importedModel->mesh.size(); ++i)
+	{
+		const auto & mesh = importedModel->mesh[i];
+		if (i < vaos_.size() && vaos_[i])
+		{
+			vaos_[i]->bind();
+
+			if (mesh.textureIndex >= 0 && mesh.textureIndex <static_cast<int>(importedModel->texture.size()))
+			{
+				importedModel->texture[mesh.textureIndex]->bind(0);
+			}
+
+			context->functions()->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indices.size()), GL_UNSIGNED_INT, nullptr);
+
+			if (mesh.textureIndex >= 0 && mesh.textureIndex < static_cast<int>(importedModel->texture.size()))
+			{
+				importedModel->texture[mesh.textureIndex]->release();
+			}
+
+			vaos_[i]->release();
+		}
+	}
+	return true;
+}
+
+void EntityModel::setUniformValues(const QMatrix4x4 & mvp)
+{
+	program_->setUniformValue(mvpUniform_, mvp);
 }

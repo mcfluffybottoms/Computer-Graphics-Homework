@@ -4,18 +4,14 @@
 
 #include <QElapsedTimer>
 #include <QMatrix4x4>
-#include <QOpenGLBuffer>
-#include <QOpenGLShaderProgram>
-#include <QOpenGLTexture>
-#include <QOpenGLVertexArrayObject>
 
 #include "Camera.h"
 #include "SliderGroup.h"
-#include "ResourceManager.h"
 #include "InputManager.h"
+#include "SceneRenderer.h"
 
 #include <functional>
-#include <memory>
+#include <qopenglcontext.h>
 
 class Window final : public fgl::GLWidget
 {
@@ -32,6 +28,7 @@ public: // fgl::GLWidget
 protected:
 	void keyPressEvent(QKeyEvent * event) override;
 	void keyReleaseEvent(QKeyEvent * event) override;
+	void mousePressEvent(QMouseEvent * event) override;
 	void mouseMoveEvent(QMouseEvent * event) override;
 	#if QT_CONFIG(wheelevent)
 		void wheelEvent(QWheelEvent *event) override;
@@ -60,47 +57,22 @@ signals:
 	void updateUI();
 
 private:
-	void changeCameraPerspective(float width, float height);
-	void setupSliders(QVBoxLayout* layout);
-	void initUniformValues();
-	void setUniformValues(const QMatrix4x4& mvp);
-
-	void processKeyboardInput();
-	QSet<int> keyboardInput;
-
 	// boxes
+	void setupSliders(QVBoxLayout* layout);
     SlidersGroup* slidersGroup_ = nullptr;
 
-	// values
-	GLint mvpUniform_ = -1;
-	GLfloat widthUniform_ = 1000.0f;
-	GLfloat heightUniform_ = 1000.0f;
-    GLfloat fromXUniform_ = -2.5;
-    GLfloat fromYUniform_ = -1.5;
-    GLfloat sizeXUniform_ = 2000.0;
-    GLfloat sizeYUniform_ = 2000.0;
-	GLint maxItersUniform_ = 100;
-	GLfloat THRESHOLD1Uniform_ = 256.0f;
-    GLfloat THRESHOLD2Uniform_ = 65536.0f;
-	GLboolean isSmoothingUniform_ = true;
-	GLint AUniform_ = 0;
-	GLint BUniform_ = 0;
-	GLint CUniform_ = 0;
-	GLint DUniform_ = 0;
-
-	GLfloat brightnessUniform_ = 0.0;
-	GLfloat contrastUniform_ = 0.0;
-
-	QOpenGLBuffer vbo_{QOpenGLBuffer::Type::VertexBuffer};
-	QOpenGLBuffer ibo_{QOpenGLBuffer::Type::IndexBuffer};
-	QOpenGLVertexArrayObject vao_;
-	std::unique_ptr<QOpenGLShaderProgram> program_;
+	const QOpenGLContext* context;
+	SceneRenderer* sceneRenderer;
 
 	// navigation
+	void changeCameraPerspective(float width, float height);
+	void processKeyboardInput();
+	QSet<int> keyboardInput;
 	QMatrix4x4 model_;
+	QVector2D lastMousePos_;
 	Camera* camera = nullptr;
 	InputManager* inputManager = nullptr;
-	ResourceManager* resourceManager = nullptr;
+	//ResourceManager* resourceManager = nullptr;
 
 	// count fps
 	QElapsedTimer timer_;

@@ -1,7 +1,7 @@
 #include "Camera.h"
+#include <QtCore>
 #include <cmath>
 #include <qvector4d.h>
-
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -97,7 +97,8 @@ QVector3D Camera::z() const
 
 float & Camera::yaw()
 {
-	if(if_need_to_recalc_view) {
+	if (if_need_to_recalc_view)
+	{
 		updateCameraVectors();
 	}
 	return yaw_;
@@ -105,7 +106,8 @@ float & Camera::yaw()
 
 float & Camera::pitch()
 {
-	if(if_need_to_recalc_view) {
+	if (if_need_to_recalc_view)
+	{
 		updateCameraVectors();
 	}
 	return pitch_;
@@ -149,7 +151,9 @@ void Camera::rotate(const QVector2D & rotateBy)
 {
 	yaw_ += rotateBy.x();
 	pitch_ += rotateBy.y();
+
 	updateCameraVectors();
+	updateView();
 }
 
 void Camera::updateCameraVectors()

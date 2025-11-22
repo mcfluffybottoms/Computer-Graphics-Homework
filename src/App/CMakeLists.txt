@@ -6,8 +6,17 @@ set(SRCS
     Camera.cpp
     Camera.h
 
-    ResourceManager.cpp
-    ResourceManager.h
+    OpenGLContext.cpp
+    OpenGLContext.h
+
+    SceneRenderer.cpp
+    SceneRenderer.h
+
+    Entity.cpp
+    Entity.h
+
+    EntityModel.cpp
+    EntityModel.h
 
     InputManager.cpp
     InputManager.h
