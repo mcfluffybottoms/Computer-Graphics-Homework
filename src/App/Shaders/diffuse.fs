@@ -12,6 +12,8 @@ void main() {
     vec4 texel = texture(tex_2d, texCoord);
     float greyscale_factor = dot(texel.rgb, vec3(0.21, 0.71, 0.07));
 
-    out_col = vec4(1.0, 0.0, 0.0, 1.0);
-
+    out_col = vec4(
+        mix(vec3(greyscale_factor), fragPos, 0.7),
+        1.0
+    );
 }

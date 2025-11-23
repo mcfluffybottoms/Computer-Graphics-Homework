@@ -16,7 +16,7 @@ struct Vertex {
 struct ModelMesh {
 	std::vector<Vertex> vertices{};
 	std::vector<uint32_t> indices{};
-    uint32_t textureIndex = -1;
+    int32_t textureIndex = -1;
 };
 
 struct Model {

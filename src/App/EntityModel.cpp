@@ -74,6 +74,7 @@ Model * EntityModel::getMesh(const QString & source)
 std::vector<std::unique_ptr<QOpenGLTexture>> EntityModel::loadTextures(const tinygltf::Model & model)
 {
 	std::vector<std::unique_ptr<QOpenGLTexture>> textures_;
+	textures_.push_back(std::make_unique<QOpenGLTexture>(QImage(":/Textures/voronoi.png"))); // fallback texture
 	for (const auto & texture: model.textures)
 	{
 		if (texture.source >= 0 && texture.source < static_cast<int>(model.images.size()))
@@ -198,6 +199,9 @@ std::vector<ModelMesh> EntityModel::loadMeshes(const tinygltf::Model & model)
 				{
 					meshData.textureIndex = material.pbrMetallicRoughness.baseColorTexture.index;
 				}
+			}
+			if(meshData.textureIndex == -1) {
+				meshData.textureIndex = 0;
 			}
 
 			meshes_.push_back(std::move(meshData));
