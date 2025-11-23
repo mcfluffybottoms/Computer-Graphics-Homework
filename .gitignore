@@ -4,3 +4,5 @@ cmake-build-*
 .idea
 .cache
 .ccls-cache
+.vscode
+.clangd

@@ -70,7 +70,7 @@ private:
 	QSet<int> keyboardInput;
 	QMatrix4x4 model_;
 	QVector2D lastMousePos_;
-	Camera* camera = nullptr;
+
 	InputManager* inputManager = nullptr;
 	//ResourceManager* resourceManager = nullptr;
 

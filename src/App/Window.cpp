@@ -28,7 +28,7 @@ void Window::changeCameraPerspective(float width, float height)
 	const float fov = -1.0f;
 	const float nearPlane = 0.1f;
 	const float farPlane = 100.0f;
-	camera->setToPerspective(fov, aspect, nearPlane, farPlane);
+	sceneRenderer->camera->setToPerspective(fov, aspect, nearPlane, farPlane);
 }
 
 void Window::setupSliders(QVBoxLayout * layout)
@@ -67,8 +67,6 @@ Window::Window() noexcept
 Window::~Window()
 {
 	{
-		if (camera)
-			delete camera;
 		if (inputManager)
 			delete inputManager;
 		// Free resources with context bounded.
@@ -91,7 +89,10 @@ void Window::onInit()
 	sceneRenderer = new SceneRenderer(std::make_shared<OpenGLContext>(f));
 	sceneRenderer->onInit(this);
 	// Camera
-	camera = new Camera();
+	sceneRenderer->camera = new Camera();
+	sceneRenderer->camera->position().setX(0);
+	sceneRenderer->camera->position().setY(0);
+	sceneRenderer->camera->position().setZ(1);
 	changeCameraPerspective((float)width(), (float)height());
 }
 
@@ -102,7 +103,7 @@ void Window::onRender()
 	// Calculate MVP matrix
 	// model_.setToIdentity();
 	// model_.translate(0, 0, -2);
-	const auto mvp = camera->getProjection() * camera->getView();
+	const auto mvp = sceneRenderer->camera->getProjection() * sceneRenderer->camera->getView();
 
 	sceneRenderer->onRender(this, mvp);
 
@@ -122,7 +123,7 @@ void Window::onResize(const size_t width, const size_t height)
 	sceneRenderer->onResize(this);
 
 	// Configure matrix
-	if (camera)
+	if (sceneRenderer->camera)
 	{
 		changeCameraPerspective((float)width, (float)height);
 	}
@@ -162,14 +163,14 @@ void Window::mousePressEvent(QMouseEvent * event)
 
 void Window::mouseMoveEvent(QMouseEvent * event)
 {
-	if (camera && (event->buttons() & Qt::LeftButton))
+	if (sceneRenderer->camera && (event->buttons() & Qt::LeftButton))
 	{
 		QVector2D result = inputManager->processMouseInput(event, lastMousePos_);
-		camera->rotate(result);
+		sceneRenderer->camera->rotate(result);
 		lastMousePos_ = {static_cast<float>(event->pos().x()), static_cast<float>(event->pos().y())};
 	}
 
-	if (camera && (event->buttons() & Qt::RightButton))
+	if (sceneRenderer->camera && (event->buttons() & Qt::RightButton))
 	{
 		QVector2D delta = inputManager->processMouseInput(event, lastMousePos_);
 
@@ -182,11 +183,11 @@ void Window::mouseMoveEvent(QMouseEvent * event)
 #if QT_CONFIG(wheelevent)
 void Window::wheelEvent(QWheelEvent * event)
 {
-	if (camera)
+	if (sceneRenderer->camera)
 	{
 		QVector3D result = inputManager->processMouseWheel(event);
 		const qreal dpr = devicePixelRatio();
-		camera->zoom(result, (float)QWidget::width(), (float)QWidget::height(), dpr);
+		sceneRenderer->camera->zoom(result, (float)QWidget::width(), (float)QWidget::height(), dpr);
 	}
 	fgl::GLWidget::wheelEvent(event);
 }
@@ -209,6 +210,6 @@ void Window::processKeyboardInput()
 	if (!keyboardInput.empty())
 	{
 		QVector2D moveBy = inputManager->processKeyboardInput(keyboardInput, 0.001);
-		camera->move(moveBy);
+		sceneRenderer->camera->move(moveBy);
 	}
 }

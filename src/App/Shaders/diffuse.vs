@@ -14,7 +14,7 @@ out vec2 fragTexCoord;
 
 void main() {
     fragPos = vec3(model * vec4(position, 1.0));
-    fragNormal = mat3(normalMatrix) * normal;
+    fragNormal = mat3(transpose(inverse(model))) * normal; // to cpu
     fragTexCoord = texCoords;
 
     gl_Position = mvp * vec4(position, 1.0);
