@@ -1,5 +1,6 @@
 #include "Window.h"
 #include "App/SceneRenderer.h"
+#include "App/SliderGroup.h"
 
 #include <QLabel>
 #include <QMouseEvent>
@@ -105,7 +106,7 @@ void Window::onRender()
 	// model_.translate(0, 0, -2);
 	const auto mvp = sceneRenderer->camera->getProjection() * sceneRenderer->camera->getView();
 
-	sceneRenderer->onRender(this, mvp);
+	sceneRenderer->onRender(slidersGroup_, mvp);
 
 	++frameCount_;
 

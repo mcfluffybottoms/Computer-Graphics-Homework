@@ -1,8 +1,11 @@
 #include "SliderGroup.h"
 #include <QLabel>
+#include <new>
 #include <qchar.h>
+#include <qcheckbox.h>
 #include <qcolor.h>
 #include <qvector3d.h>
+#include <qwidget.h>
 
 SlidersGroup::SlidersGroup(const QString & title, QWidget * parent)
 	: QGroupBox(title, parent)
@@ -12,26 +15,56 @@ SlidersGroup::SlidersGroup(const QString & title, QWidget * parent)
 	connectSignals();
 }
 
+QVector3D SlidersGroup::getVector(int vec_name) {
+	if(vec_name == 1) {
+		return directionalLightPosition_->value();
+	} else if (vec_name == 2) {
+		return projectionLightPosition_->value();
+	} else if (vec_name == 3) {
+		return projectionLightDirection_->value();
+	}
+	return {0, 0, 0};
+}
+
 void SlidersGroup::createSliders()
 {
 
 	// positions
-	positionsLayout = new QVBoxLayout(positionsGroup);
-	THRESHOLD1_ = addSlider(-1000, 1000, fromX, 0.1f, "THRESHOLD1:", positionsLayout);
-	THRESHOLD2_ = addSlider(-10000, 10000, fromY, 0.1f, "THRESHOLD2:", positionsLayout);
-    fromX_ = addSlider(-50, 50, fromX, 0.1f, "From X:", positionsLayout);
-	fromY_ = addSlider(-50, 50, fromY, 0.1f, "From Y:", positionsLayout);
-	size_ = addSlider(1, 2000, sizeX, 1, "Size X:", positionsLayout);
-	maxIters_ = addSlider(1, 800, (float)maxIters, 1, "Max Iterations:", positionsLayout);
+	lightLayout = new QVBoxLayout(lightGroup);
+	diffuse_ = addSlider(0, 100, diffuse, 0.01f, "Diffuse:", lightLayout);
+	specular_ = addSlider(0, 100, specular, 0.01f, "Specular:", lightLayout);
+	ambient_ = addSlider(0, 100, ambient, 0.01f, "Ambient:", lightLayout);
+
 	// colors
-	colorsLayout = new QVBoxLayout(colorsGroup);
-	brightness_ = addSlider(0, 30, brightness, 0.1f, "Brightness:", colorsLayout);
-	contrast_ = addSlider(0, 30, contrast, 0.1f, "Contrast:", colorsLayout);
-	colorA_ = addColorButton("", colorA, colorsLayout);
-	colorB_ = addColorButton("", colorB, colorsLayout);
-	colorC_ = addColorButton("", colorC, colorsLayout);
-	colorD_ = addColorButton("", colorD, colorsLayout);
-	setFixedWidth(200);
+	directionLayout = new QVBoxLayout(directionGroup);
+	hasDirectional_ = addToggle("Has Directional", directionLayout);
+	directionalLightPosition_ = addInputs("Light Position", directionLayout);
+	directionalLightColor_ = addColorButton("", directionalLightColor, directionLayout);
+	
+	projectionLayout = new QVBoxLayout(projectionGroup);
+	hasProjection_ = addToggle("Has Projector", projectionLayout);
+	projectionLightDirection_ = addInputs("Light Direction", projectionLayout);
+	projectionLightPosition_ = addInputs("Light Position", projectionLayout);
+	projCutOff_ = addSlider(0, 3600, projCutOff, 0.1f, "Cutoff:", projectionLayout);
+	projOuterCutOff_ = addSlider(0, 3600, projOuterCutOff, 0.1f, "Outer Cutoff:", projectionLayout);
+	projectionLightColor_ = addColorButton("", projectionLightColor, projectionLayout);
+	
+	
+	setFixedWidth(300);
+}
+
+Vector3DInputWidget* SlidersGroup::addInputs(const QString & name, QVBoxLayout * layout) {
+	layout->addWidget(new QLabel(name));
+	Vector3DInputWidget* widg = new Vector3DInputWidget();
+	layout->addWidget(widg);
+	return widg;
+}
+
+QCheckBox* SlidersGroup::addToggle(const QString & name, QVBoxLayout * layout) {
+	layout->addWidget(new QLabel(name));
+	QCheckBox* widg = new QCheckBox();
+	layout->addWidget(widg);
+	return widg;
 }
 
 QSlider * SlidersGroup::addSlider(
@@ -44,7 +77,7 @@ QSlider * SlidersGroup::addSlider(
 {
 	QSlider * slider = new QSlider(Qt::Horizontal);
 	slider->setRange(min, max);
-	slider->setValue((int)(current * step));
+	slider->setValue((int)(current / step));
 	layout->addWidget(new QLabel(name));
 	layout->addWidget(slider);
 	return slider;
@@ -66,77 +99,68 @@ void SlidersGroup::updateColorButton(QPushButton * button, const QColor & color)
 
 void SlidersGroup::setupLayout()
 {
+	this->setStyleSheet("background-color: lightblue;");
 	mainLayout = new QVBoxLayout();
-	mainLayout->addWidget(positionsGroup);
-	mainLayout->addWidget(colorsGroup);
+	mainLayout->addWidget(lightGroup);
+	mainLayout->addWidget(directionGroup);
+	mainLayout->addWidget(projectionGroup);
+	mainLayout->setContentsMargins(10, 10, 10, 10);
+    mainLayout->setSpacing(5);
 	setLayout(mainLayout);
 }
 
 void SlidersGroup::connectSignals()
 {
-	connect(fromX_, &QSlider::valueChanged, this, &SlidersGroup::onFromXChanged);
-	connect(fromY_, &QSlider::valueChanged, this, &SlidersGroup::onFromYChanged);
-	connect(size_, &QSlider::valueChanged, this, &SlidersGroup::onSizeChanged);
-	connect(maxIters_, &QSlider::valueChanged, this, &SlidersGroup::onMaxItersChanged);
+	connect(ambient_, &QSlider::valueChanged, this, &SlidersGroup::onAmbientChanged);
+	connect(diffuse_, &QSlider::valueChanged, this, &SlidersGroup::onDiffuseChanged);
+	connect(specular_, &QSlider::valueChanged, this, &SlidersGroup::onSpecularChanged);
+	connect(directionalLightColor_, &QPushButton::clicked, this, &SlidersGroup::onColorDirButtonClicked);
+	connect(projectionLightColor_, &QPushButton::clicked, this, &SlidersGroup::onColorProjButtonClicked);
 
-    connect(THRESHOLD1_, &QSlider::valueChanged, this, &SlidersGroup::onTHRESHOLD1Changed);
-    connect(THRESHOLD2_, &QSlider::valueChanged, this, &SlidersGroup::onTHRESHOLD2Changed);
+	connect(hasDirectional_, &QCheckBox::clicked, this, &SlidersGroup::onHasDirectionalClicked);
+	connect(hasProjection_, &QCheckBox::clicked, this, &SlidersGroup::onHasProjectionClicked);
 
-	connect(brightness_, &QSlider::valueChanged, this, &SlidersGroup::onBrightnessChanged);
-	connect(contrast_, &QSlider::valueChanged, this, &SlidersGroup::onContrastChanged);
-	connect(colorA_, &QPushButton::clicked, this, &SlidersGroup::onColorAButtonClicked);
-	connect(colorB_, &QPushButton::clicked, this, &SlidersGroup::onColorBButtonClicked);
-	connect(colorC_, &QPushButton::clicked, this, &SlidersGroup::onColorCButtonClicked);
-	connect(colorD_, &QPushButton::clicked, this, &SlidersGroup::onColorDButtonClicked);
+	connect(projCutOff_, &QSlider::valueChanged, this, &SlidersGroup::onCutOffClicked);
+	connect(projOuterCutOff_, &QSlider::valueChanged, this, &SlidersGroup::onOuterCutOffClicked);
+
 }
 
-void SlidersGroup::onFromXChanged(int value)
-{
-	fromX = (float)value * 0.1f;
-	emit fromXChanged(value);
+void SlidersGroup::onCutOffClicked(int value) {
+	projCutOff = value * 0.1f;
+	emit cutOffClicked(value);
 }
 
-void SlidersGroup::onFromYChanged(int value)
-{
-	fromY = (float)value * 0.1f;
-	emit fromYChanged(value);
+void SlidersGroup::onOuterCutOffClicked(int value) {
+	projOuterCutOff = value * 0.1f;
+	emit outerCutOffClicked(value);
 }
 
-void SlidersGroup::onSizeChanged(int value)
-{
-	wid = (float)value;
-    hei = wid;
-	emit sizeChanged(value);
+void SlidersGroup::onHasDirectionalClicked(bool value) {
+	hasDirectional = value;
+	emit hasDirectionalClicked(value);
 }
 
-void SlidersGroup::onMaxItersChanged(int value)
-{
-	maxIters = value;
-	emit maxItersChanged(value);
+void SlidersGroup::onHasProjectionClicked(bool value) {
+	hasProjection = value;
+	emit hasProjectionClicked(value);
 }
 
-void SlidersGroup::onBrightnessChanged(int value)
+void SlidersGroup::onAmbientChanged(int value)
 {
-	brightness = (float)value * 0.1f;
-	emit brightnessChanged(value);
+	ambient = (float)value * 0.01f;
+	emit ambientChanged(value);
 }
 
-void SlidersGroup::onContrastChanged(int value)
+void SlidersGroup::onDiffuseChanged(int value)
 {
-	contrast = (float)value * 0.1f;
-	emit contrastChanged(value);
+	diffuse = (float)value * 0.01f;
+	emit diffuseChanged(value);
 }
 
-void SlidersGroup::onTHRESHOLD1Changed(int value)
+void SlidersGroup::onSpecularChanged(int value)
 {
-	THRESHOLD1 = (float)value;
-	emit THRESHOLD1Changed(value);
-}
-
-void SlidersGroup::onTHRESHOLD2Changed(int value)
-{
-	THRESHOLD2 = (float)value;
-	emit THRESHOLD2Changed(value);
+	specular = (float)value * 0.01f;
+	emit specularChanged(value);
 }
 
 void SlidersGroup::onColorButtonClicked(QPushButton * button, QVector3D& color, const QString& title)
@@ -150,26 +174,14 @@ void SlidersGroup::onColorButtonClicked(QPushButton * button, QVector3D& color, 
 	}
 }
 
-void SlidersGroup::onColorAButtonClicked()
+void SlidersGroup::onColorDirButtonClicked()
 {
-    onColorButtonClicked(colorA_, colorA, "Choose Color A");
-    emit colorAChanged(colorA);
+    onColorButtonClicked(directionalLightColor_, directionalLightColor, "Choose Color A");
+    emit colorDirButtonClicked(directionalLightColor);
 }
 
-void SlidersGroup::onColorBButtonClicked()
+void SlidersGroup::onColorProjButtonClicked()
 {
-    onColorButtonClicked(colorB_, colorB, "Choose Color B");
-    emit colorAChanged(colorB);
-}
-
-void SlidersGroup::onColorCButtonClicked()
-{
-    onColorButtonClicked(colorC_, colorC, "Choose Color C");
-    emit colorAChanged(colorC);
-}
-
-void SlidersGroup::onColorDButtonClicked()
-{
-    onColorButtonClicked(colorD_, colorD, "Choose Color D");
-    emit colorAChanged(colorD);
+    onColorButtonClicked(projectionLightColor_, projectionLightColor, "Choose Color B");
+    emit colorProjButtonClicked(projectionLightColor);
 }

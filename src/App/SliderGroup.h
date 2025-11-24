@@ -1,4 +1,5 @@
 #pragma once
+#include "App/Vector3DInputWidget.h"
 #include <QBoxLayout>
 #include <QColorDialog>
 #include <QGroupBox>
@@ -6,6 +7,7 @@
 #include <QPushButton>
 #include <QColor>
 #include <QVector3D>
+#include <QCheckBox>
 
 class SlidersGroup : public QGroupBox
 {
@@ -13,58 +15,50 @@ class SlidersGroup : public QGroupBox
 
 public:
 	SlidersGroup(const QString & title, QWidget * parent = nullptr);
-	// positions
-    float wid = 1000.0f;
-	float hei = 1000.0f;
-	float fromX = -1.5f;
-	float fromY = -1.5f;
-	float sizeX = 1000.0f;
-	float sizeY = 1000.0f;
-	int maxIters = 100;
-	bool isSmoothing = true;
 
-    float THRESHOLD1 = 256.0f;
-    float THRESHOLD2 = 65536.0f; 
+    // lights
+    float ambient = 1.0f;
+	float diffuse = 1.0f;
+    float specular = 1.0f;
+    QVector3D directionalLightColor = QVector3D(0.5f, 0.5f, 0.5f);
+    QVector3D projectionLightColor = QVector3D(0.5f, 0.5f, 0.5f);
 
-    // colors
-    float brightness = 1.0f;
-	float contrast = 1.0f;
-    QVector3D colorA = QVector3D(0.5f, 0.5f, 0.5f);
-    QVector3D colorB = QVector3D(0.5f, 0.5f, 0.5f);
-    QVector3D colorC = QVector3D(1.0f, 1.0f, 1.0f);
-    QVector3D colorD = QVector3D(0.3f, 0.2f, 0.2f);
+    QVector3D directionalLightPosition = QVector3D(0.5f, 0.5f, 0.5f);
+    QVector3D projectionLightPosition = QVector3D(0.5f, 0.5f, 0.5f);
+
+    QVector3D getVector(int vec_name);
+
+    QVector3D projectionLightDir = QVector3D(0.5f, 0.5f, 0.5f);
+    
+    float projCutOff{20.f};
+	float projOuterCutOff{50.0f};
+
+    bool hasDirectional = false;
+    bool hasProjection = false;
 
 signals:
-	void fromXChanged(int value);
-	void fromYChanged(int value);
-	void sizeChanged(int value);
-	void maxItersChanged(int value);
-
-    void brightnessChanged(int value);
-	void contrastChanged(int value);
-    void colorAChanged(const QVector3D& value);
-    void colorBChanged(const QVector3D& value);
-    void colorCChanged(const QVector3D& value);
-    void colorDChanged(const QVector3D& value);
-
-    void THRESHOLD1Changed(int value);
-    void THRESHOLD2Changed(int value);
+    void ambientChanged(int value);
+	void diffuseChanged(int value);
+    void specularChanged(int value);
+    void colorDirButtonClicked(const QVector3D& value);
+    void colorProjButtonClicked(const QVector3D& value);
+    void hasDirectionalClicked(bool value);
+    void hasProjectionClicked(bool value);
+    void cutOffClicked(int value);
+    void outerCutOffClicked(int value);
 
 private slots:
-	void onFromXChanged(int value);
-	void onFromYChanged(int value);
-	void onSizeChanged(int value);
-	void onMaxItersChanged(int value);
+    void onAmbientChanged(int value);
+	void onDiffuseChanged(int value);
+    void onSpecularChanged(int value);
+    void onColorDirButtonClicked();
+    void onColorProjButtonClicked();
 
-    void onTHRESHOLD1Changed(int value);
-	void onTHRESHOLD2Changed(int value);
+    void onHasDirectionalClicked(bool value);
+    void onHasProjectionClicked(bool value);
 
-    void onBrightnessChanged(int value);
-    void onContrastChanged(int value);
-    void onColorAButtonClicked();
-    void onColorBButtonClicked();
-    void onColorCButtonClicked();
-    void onColorDButtonClicked();
+    void onCutOffClicked(int value);
+    void onOuterCutOffClicked(int value);
 private:
 	void createSliders();
 	void setupLayout();
@@ -72,29 +66,36 @@ private:
 
     QSlider * addSlider(int min, int max, float current, float step, const QString& name, QBoxLayout* layout) const;
     QPushButton * addColorButton(const QString & text, const QVector3D & color, QBoxLayout * layout) const;
+    Vector3DInputWidget* addInputs(const QString & name, QVBoxLayout * layout);
+    QCheckBox* addToggle(const QString & name, QVBoxLayout * layout);
+    
     void updateColorButton(QPushButton * button, const QColor & color) const;
     void onColorButtonClicked(QPushButton * button, QVector3D& color, const QString& title);
 
     QColorDialog * colorPicker_;
 
-    // position
-	QSlider * fromX_;
-	QSlider * fromY_;
-	QSlider * size_;
-    QSlider * maxIters_;
-    QSlider * THRESHOLD1_;
-	QSlider * THRESHOLD2_;
     // colors
-    QSlider * brightness_;
-	QSlider * contrast_;
-    QPushButton * colorA_;
-	QPushButton * colorB_;
-    QPushButton * colorC_;
-	QPushButton * colorD_;
+    QSlider * ambient_;
+	QSlider * diffuse_;
+    QSlider * specular_;
+    QPushButton * directionalLightColor_;
+	QPushButton * projectionLightColor_;
+    Vector3DInputWidget* directionalLightPosition_;
+    Vector3DInputWidget* projectionLightPosition_;
+    Vector3DInputWidget* projectionLightDirection_;
+
+    QSlider * projCutOff_;
+	QSlider * projOuterCutOff_;
+
+    QCheckBox * hasDirectional_;
+    QCheckBox * hasProjection_;
+
     // layouts
-    QGroupBox* positionsGroup = new QGroupBox("Position Parameters");
-    QGroupBox* colorsGroup = new QGroupBox("Color Parameters");
-    QVBoxLayout * colorsLayout;
-    QVBoxLayout * positionsLayout;
+    QGroupBox* lightGroup = new QGroupBox("Light Parameters");
+    QGroupBox* directionGroup = new QGroupBox("Direction Light Parameters");
+    QGroupBox* projectionGroup = new QGroupBox("Projection Light Parameters");
+    QVBoxLayout * lightLayout;
+    QVBoxLayout * directionLayout;
+    QVBoxLayout * projectionLayout;
     QLayout * mainLayout;
 };

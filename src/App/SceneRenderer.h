@@ -1,5 +1,6 @@
 #pragma once
 
+#include "App/SliderGroup.h"
 #include "EntityModel.h"
 #include <Base/GLWidget.hpp>
 #include <QOpenGLBuffer>
@@ -15,17 +16,31 @@ struct SceneRenderer {
 
 	bool onInit(fgl::GLWidget * window);
 
-	bool onRender(fgl::GLWidget * window, const QMatrix4x4 & mvp);
+	bool onRender(SlidersGroup * window, const QMatrix4x4 & mvp);
 
 	bool onResize(fgl::GLWidget * window);
 
 	bool setShaders();
-    void setUniformValues(const QMatrix4x4 & mvp);
+	void setUniformValues(const QMatrix4x4 & mvp, const QVector3D & lightPosition_,
+						  const QVector3D & lightColor_,
+						  const QVector3D & projLightPosition_,
+						  const QVector3D & projLightColor_,
+						  const QVector3D & projLightDirection_,
+						  float projCutOff_,
+						  float projOuterCutOff_,
 
-	void rotateObj(const QVector2D& rotation);
+						  float ambient_,
+						  float diffuse_,
+						  float specular_,
 
-	
-	Camera* camera = nullptr;
+						  bool directional_,
+						  bool projection_);
+
+	void rotateObj(const QVector2D & rotation);
+
+
+	Camera * camera = nullptr;
+
 private:
 	OpenGLContextPtr context_;
 
@@ -35,13 +50,35 @@ private:
 
 	EntityModel * entityModel = nullptr;
 
-	QVector3D lightPosition_{1.2f, -1.5f, 2.0f};
+	QVector3D lightPosition_{10.f, -15.f, 20.f};
 	QVector3D lightColor_{1.0f, 0.0f, 0.5f};
+
+	QVector3D projLightPosition_{10.f, -15.f, 20.f};
+	QVector3D projLightColor_{1.0f, 1.0f, 0.5f};
+	float projCutOff_{20.f};
+	float projOuterCutOff_{50.0f};
+
+	float ambient_ = 0.2f;
+	float diffuse_ = 1.0f;
+	float specular_ = 0.4f;
+
+	bool directional_ = true;
+	bool projection_ = true;
 
 	GLint uniformLightPosition_ = 1.0f;
 	GLint uniformLightColor_ = 1.0f;
-	GLint uniformViewPos_ = 1.0f;
-	GLfloat ambient_ = 1.0f;
-	GLfloat diffuse_ = 1.0f;
 
+	GLint uniformProjLightPosition_ = 1.0f;
+	GLint uniformProjLightColor_ = 1.0f;
+	GLint uniformProjCutOff_ = 1.0f;
+	GLint uniformProjOuterCutOff_ = 1.0f;
+	GLint uniformProjLightDir_ = 1.0f;
+
+	GLint uniformViewPos_ = 1.0f;
+	GLfloat uniformAmbient_ = 1.0f;
+	GLfloat uniformDiffuse_ = 1.0f;
+	GLfloat uniformSpecular_ = 1.0f;
+
+	GLboolean uniformDirectional_ = true;
+	GLboolean uniformProjection_ = true;
 };
