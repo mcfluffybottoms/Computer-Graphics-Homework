@@ -263,18 +263,7 @@ bool EntityModel::loadBuffers() {
 		ibos_.push_back(std::move(ibo_));
 
 	}
-	qDebug() << "Model has" << importedModel->mesh.size() << "meshes";
-	qDebug() << "VAOs:" << vaos_.size();
-	qDebug() << "VBOs:" << vbos_.size();
-	qDebug() << "IBOs:" << ibos_.size();
-	qDebug() << "Textures:" << importedModel->texture.size();
-	
-	for (size_t i = 0; i < importedModel->mesh.size(); ++i) {
-		const auto& mesh = importedModel->mesh[i];
-		qDebug() << "Mesh" << i << ":" << mesh.vertices.size() << "vertices," 
-				<< mesh.indices.size() << "indices, texture index:" << mesh.textureIndex;
-		qDebug() << "  VAO valid:" << (i < vaos_.size() && vaos_[i] && vaos_[i]->isCreated());
-	}
+
 	return true;
 }
 
