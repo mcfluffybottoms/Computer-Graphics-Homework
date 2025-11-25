@@ -7,7 +7,7 @@ layout(location=2) in vec2 texCoords;
 uniform mat4 mvp;
 uniform mat4 model;
 uniform mat4 normalMatrix;
-uniform float sphereRadius = 30;
+uniform float sphereRadius = 1.5;
 uniform float morphIntensity = 1.0;
 
 out vec3 fragPos;
