@@ -1,0 +1,241 @@
+#include "SliderGroup.h"
+#include <QLabel>
+#include <new>
+#include <qchar.h>
+#include <qcheckbox.h>
+#include <qcolor.h>
+#include <qvector3d.h>
+#include <qwidget.h>
+
+SlidersGroup::SlidersGroup(const QString & title, QWidget * parent)
+	: QGroupBox(title, parent)
+{
+	createSliders();
+	setupLayout();
+	connectSignals();
+}
+
+QVector3D SlidersGroup::getVector(int vec_name)
+{
+	if (vec_name == 1)
+	{
+		return directionalLightPosition_->value();
+	}
+	else if (vec_name == 2)
+	{
+		return projectionLightPosition_->value();
+	}
+	else if (vec_name == 3)
+	{
+		return projectionLightDirection_->value();
+	}
+	return {0, 0, 0};
+}
+
+void SlidersGroup::createSliders()
+{
+
+	// morph
+	morphLayout = new QVBoxLayout(morphGroup);
+	morph_ = addSlider(0, 100, morph, 0.01, "Morph intensity", morphLayout);
+	circleRadius_ = addSlider(0, 1000, ambientP, 0.01f, "Radius:", morphLayout);
+	// positions
+	
+	// colors
+	directionLayout = new QVBoxLayout(directionGroup);
+	hasDirectional_ = addToggle("Has Directional", directionLayout);
+	directionalLightPosition_ = addInputs("Light Position", directionLayout, directionalLightPosition);
+	directionalLightColor_ = addColorButton("", directionalLightColor, directionLayout);
+	diffuse_ = addSlider(0, 100, diffuse, 0.01f, "Diffuse:", directionLayout);
+	specular_ = addSlider(0, 100, specular, 0.01f, "Specular:", directionLayout);
+	ambient_ = addSlider(0, 100, ambient, 0.01f, "Ambient:", directionLayout);
+
+	projectionLayout = new QVBoxLayout(projectionGroup);
+	hasProjection_ = addToggle("Has Projector", projectionLayout);
+	//projectionLightDirection_ = addInputs("Light Direction", projectionLayout, projectionLightDir);
+	projectionLightPosition_ = addInputs("Light Position", projectionLayout, projectionLightPosition);
+	projCutOff_ = addSlider(0, 3600, projCutOff, 0.1f, "Cutoff:", projectionLayout);
+	projOuterCutOff_ = addSlider(0, 3600, projOuterCutOff, 0.1f, "Outer Cutoff:", projectionLayout);
+	projectionLightColor_ = addColorButton("", projectionLightColor, projectionLayout);
+	diffuseP_ = addSlider(0, 100, diffuseP, 0.01f, "Diffuse:", projectionLayout);
+	specularP_ = addSlider(0, 100, specularP, 0.01f, "Specular:", projectionLayout);
+	ambientP_ = addSlider(0, 100, ambientP, 0.01f, "Ambient:", projectionLayout);
+	setFixedWidth(300);
+}
+
+Vector3DInputWidget * SlidersGroup::addInputs(const QString & name, QVBoxLayout * layout, const QVector3D & vec)
+{
+	layout->addWidget(new QLabel(name));
+	Vector3DInputWidget * widg = new Vector3DInputWidget();
+	layout->addWidget(widg);
+	widg->setValue(vec);
+	return widg;
+}
+
+QCheckBox * SlidersGroup::addToggle(const QString & name, QVBoxLayout * layout)
+{
+	layout->addWidget(new QLabel(name));
+	QCheckBox * widg = new QCheckBox();
+	layout->addWidget(widg);
+	return widg;
+}
+
+QSlider * SlidersGroup::addSlider(
+	int min,
+	int max,
+	float current,
+	float step,
+	const QString & name,
+	QBoxLayout * layout) const
+{
+	QSlider * slider = new QSlider(Qt::Horizontal);
+	slider->setRange(min, max);
+	slider->setValue((int)(current / step));
+	layout->addWidget(new QLabel(name));
+	layout->addWidget(slider);
+	return slider;
+}
+
+QPushButton * SlidersGroup::addColorButton(const QString & text, const QVector3D & color, QBoxLayout * layout) const
+{
+	QPushButton * button = new QPushButton(text);
+	button->setFixedHeight(30);
+	updateColorButton(button, QColor::fromRgbF(color.x(), color.y(), color.z()));
+	layout->addWidget(button);
+	return button;
+}
+
+void SlidersGroup::updateColorButton(QPushButton * button, const QColor & color) const
+{
+	button->setStyleSheet(QString("background-color: %1;").arg(color.name()));
+}
+
+void SlidersGroup::setupLayout()
+{
+	this->setStyleSheet("background-color: lightblue;");
+	mainLayout = new QVBoxLayout();
+	mainLayout->addWidget(morphGroup);
+	mainLayout->addWidget(directionGroup);
+	mainLayout->addWidget(projectionGroup);
+	mainLayout->setContentsMargins(10, 10, 10, 10);
+	mainLayout->setSpacing(5);
+	setLayout(mainLayout);
+}
+
+void SlidersGroup::connectSignals()
+{
+	connect(ambient_, &QSlider::valueChanged, this, &SlidersGroup::onAmbientChanged);
+	connect(diffuse_, &QSlider::valueChanged, this, &SlidersGroup::onDiffuseChanged);
+	connect(specular_, &QSlider::valueChanged, this, &SlidersGroup::onSpecularChanged);
+
+	connect(ambientP_, &QSlider::valueChanged, this, &SlidersGroup::onAmbientPChanged);
+	connect(diffuseP_, &QSlider::valueChanged, this, &SlidersGroup::onDiffusePChanged);
+	connect(specularP_, &QSlider::valueChanged, this, &SlidersGroup::onSpecularPChanged);
+
+	connect(directionalLightColor_, &QPushButton::clicked, this, &SlidersGroup::onColorDirButtonClicked);
+	connect(projectionLightColor_, &QPushButton::clicked, this, &SlidersGroup::onColorProjButtonClicked);
+
+	connect(hasDirectional_, &QCheckBox::clicked, this, &SlidersGroup::onHasDirectionalClicked);
+	connect(hasProjection_, &QCheckBox::clicked, this, &SlidersGroup::onHasProjectionClicked);
+
+	connect(projCutOff_, &QSlider::valueChanged, this, &SlidersGroup::onCutOffClicked);
+	connect(projOuterCutOff_, &QSlider::valueChanged, this, &SlidersGroup::onOuterCutOffClicked);
+
+	connect(morph_, &QSlider::valueChanged, this, &SlidersGroup::onMorphChanged);
+
+	connect(circleRadius_, &QSlider::valueChanged, this, &SlidersGroup::onRadiusChanged);
+}
+
+void SlidersGroup::onRadiusChanged(int value) {
+	circleRadius = value * 0.01f;
+	emit morphChanged(value);
+}
+
+void SlidersGroup::onMorphChanged(int value)
+{
+	morph = value * 0.01f;
+	emit morphChanged(value);
+}
+
+void SlidersGroup::onCutOffClicked(int value)
+{
+	projCutOff = value * 0.1f;
+	emit cutOffClicked(value);
+}
+
+void SlidersGroup::onOuterCutOffClicked(int value)
+{
+	projOuterCutOff = value * 0.1f;
+	emit outerCutOffClicked(value);
+}
+
+void SlidersGroup::onHasDirectionalClicked(bool value)
+{
+	hasDirectional = value;
+	emit hasDirectionalClicked(value);
+}
+
+void SlidersGroup::onHasProjectionClicked(bool value)
+{
+	hasProjection = value;
+	emit hasProjectionClicked(value);
+}
+
+void SlidersGroup::onAmbientChanged(int value)
+{
+	ambient = (float)value * 0.01f;
+	emit ambientChanged(value);
+}
+
+void SlidersGroup::onDiffuseChanged(int value)
+{
+	diffuse = (float)value * 0.01f;
+	emit diffuseChanged(value);
+}
+
+void SlidersGroup::onSpecularChanged(int value)
+{
+	specularP = (float)value * 0.01f;
+	emit specularPChanged(value);
+}
+
+void SlidersGroup::onAmbientPChanged(int value)
+{
+	ambientP = (float)value * 0.01f;
+	emit ambientPChanged(value);
+}
+
+void SlidersGroup::onDiffusePChanged(int value)
+{
+	diffuseP = (float)value * 0.01f;
+	emit diffusePChanged(value);
+}
+
+void SlidersGroup::onSpecularPChanged(int value)
+{
+	specular = (float)value * 0.01f;
+	emit specularChanged(value);
+}
+
+void SlidersGroup::onColorButtonClicked(QPushButton * button, QVector3D & color, const QString & title)
+{
+	QColor currentColor = QColor::fromRgbF(color.x(), color.y(), color.z());
+	QColor newColor = QColorDialog::getColor(currentColor, this, title);
+	if (newColor.isValid())
+	{
+		color = QVector3D(newColor.redF(), newColor.greenF(), newColor.blueF());
+		updateColorButton(button, newColor);
+	}
+}
+
+void SlidersGroup::onColorDirButtonClicked()
+{
+	onColorButtonClicked(directionalLightColor_, directionalLightColor, "Choose Color A");
+	emit colorDirButtonClicked(directionalLightColor);
+}
+
+void SlidersGroup::onColorProjButtonClicked()
+{
+	onColorButtonClicked(projectionLightColor_, projectionLightColor, "Choose Color B");
+	emit colorProjButtonClicked(projectionLightColor);
+}

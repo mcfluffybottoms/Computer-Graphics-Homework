@@ -4,13 +4,13 @@
 
 #include <QElapsedTimer>
 #include <QMatrix4x4>
-#include <QOpenGLBuffer>
-#include <QOpenGLShaderProgram>
-#include <QOpenGLTexture>
-#include <QOpenGLVertexArrayObject>
+
+#include "InputManager.h"
+#include "SceneRenderer.h"
+#include "SliderGroup.h"
 
 #include <functional>
-#include <memory>
+#include <qopenglcontext.h>
 
 class Window final : public fgl::GLWidget
 {
@@ -19,11 +19,19 @@ public:
 	Window() noexcept;
 	~Window() override;
 
-public: // fgl::GLWidget
+public:// fgl::GLWidget
 	void onInit() override;
 	void onRender() override;
 	void onResize(size_t width, size_t height) override;
 
+protected:
+	void keyPressEvent(QKeyEvent * event) override;
+	void keyReleaseEvent(QKeyEvent * event) override;
+	void mousePressEvent(QMouseEvent * event) override;
+	void mouseMoveEvent(QMouseEvent * event) override;
+#if QT_CONFIG(wheelevent)
+	void wheelEvent(QWheelEvent * event) override;
+#endif
 private:
 	class PerfomanceMetricsGuard final
 	{
@@ -48,25 +56,28 @@ signals:
 	void updateUI();
 
 private:
-	GLint mvpUniform_ = -1;
+	// boxes
+	void setupSliders(QVBoxLayout * layout);
+	SlidersGroup * slidersGroup_ = nullptr;
 
-	QOpenGLBuffer vbo_{QOpenGLBuffer::Type::VertexBuffer};
-	QOpenGLBuffer ibo_{QOpenGLBuffer::Type::IndexBuffer};
-	QOpenGLVertexArrayObject vao_;
+	const QOpenGLContext * context;
+	SceneRenderer * sceneRenderer;
 
+	// navigation
+	void changeCameraPerspective(float width, float height);
+	void processKeyboardInput();
+	QSet<int> keyboardInput;
 	QMatrix4x4 model_;
-	QMatrix4x4 view_;
-	QMatrix4x4 projection_;
+	QVector2D lastMousePos_;
 
-	std::unique_ptr<QOpenGLTexture> texture_;
-	std::unique_ptr<QOpenGLShaderProgram> program_;
+	InputManager * inputManager = nullptr;
+	//ResourceManager* resourceManager = nullptr;
 
+	// count fps
 	QElapsedTimer timer_;
 	size_t frameCount_ = 0;
-
 	struct {
 		size_t fps = 0;
 	} ui_;
-
 	bool animated_ = true;
 };

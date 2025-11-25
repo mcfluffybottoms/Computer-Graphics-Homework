@@ -3,6 +3,35 @@ set(SRCS
     Window.cpp
     Window.h
 
+    Camera.cpp
+    Camera.h
+
+    OpenGLContext.cpp
+    OpenGLContext.h
+
+    Vector3DInputWidget.cpp
+    Vector3DInputWidget.h
+
+    SceneRenderer.cpp
+    SceneRenderer.h
+
+    Light.cpp
+    Light.h
+
+    Entity.cpp
+    Entity.h
+
+    EntityModel.cpp
+    EntityModel.h
+
+    InputManager.cpp
+    InputManager.h
+
+    Resources.h
+
+    SliderGroup.cpp
+    SliderGroup.h
+    
     Shaders/diffuse.fs
     Shaders/diffuse.vs
     Textures/voronoi.png
@@ -11,7 +40,6 @@ set(SRCS
 )
 
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
-
 add_executable(demo-app ${SRCS})
 
 target_link_libraries(demo-app
@@ -19,4 +47,5 @@ target_link_libraries(demo-app
         Qt5::Widgets
         FGL::Base
         thirdparty::tinygltf
+        
 )
