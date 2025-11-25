@@ -2,6 +2,8 @@
 #include "App/SceneRenderer.h"
 #include "App/SliderGroup.h"
 
+#include "Camera.h"
+
 #include <QLabel>
 #include <QMouseEvent>
 #include <QOpenGLFunctions>
@@ -9,13 +11,8 @@
 #include <QScreen>
 #include <QVBoxLayout>
 
-#include <iostream>
-
-#include <array>
-#include <qboxlayout.h>
-#include <qmatrix4x4.h>
-#include <qnamespace.h>
-#include <qopenglcontext.h>
+#include <QMatrix4x4>
+#include <QOpenGLContext>
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -164,13 +161,6 @@ void Window::mousePressEvent(QMouseEvent * event)
 
 void Window::mouseMoveEvent(QMouseEvent * event)
 {
-	if (sceneRenderer->camera && (event->buttons() & Qt::LeftButton))
-	{
-		QVector2D result = inputManager->processMouseInput(event, lastMousePos_);
-		sceneRenderer->camera->rotate(result);
-		lastMousePos_ = {static_cast<float>(event->pos().x()), static_cast<float>(event->pos().y())};
-	}
-
 	if (sceneRenderer->camera && (event->buttons() & Qt::RightButton))
 	{
 		QVector2D delta = inputManager->processMouseInput(event, lastMousePos_);

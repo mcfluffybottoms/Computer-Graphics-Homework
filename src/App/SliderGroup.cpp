@@ -15,12 +15,18 @@ SlidersGroup::SlidersGroup(const QString & title, QWidget * parent)
 	connectSignals();
 }
 
-QVector3D SlidersGroup::getVector(int vec_name) {
-	if(vec_name == 1) {
+QVector3D SlidersGroup::getVector(int vec_name)
+{
+	if (vec_name == 1)
+	{
 		return directionalLightPosition_->value();
-	} else if (vec_name == 2) {
+	}
+	else if (vec_name == 2)
+	{
 		return projectionLightPosition_->value();
-	} else if (vec_name == 3) {
+	}
+	else if (vec_name == 3)
+	{
 		return projectionLightDirection_->value();
 	}
 	return {0, 0, 0};
@@ -29,7 +35,7 @@ QVector3D SlidersGroup::getVector(int vec_name) {
 void SlidersGroup::createSliders()
 {
 
-	// morph 
+	// morph
 	morphLayout = new QVBoxLayout(morphGroup);
 	morph_ = addSlider(0, 100, morph, 0.01, "Morph intensity", morphLayout);
 	// positions
@@ -43,7 +49,7 @@ void SlidersGroup::createSliders()
 	hasDirectional_ = addToggle("Has Directional", directionLayout);
 	directionalLightPosition_ = addInputs("Light Position", directionLayout, directionalLightPosition);
 	directionalLightColor_ = addColorButton("", directionalLightColor, directionLayout);
-	
+
 	projectionLayout = new QVBoxLayout(projectionGroup);
 	hasProjection_ = addToggle("Has Projector", projectionLayout);
 	//projectionLightDirection_ = addInputs("Light Direction", projectionLayout, projectionLightDir);
@@ -51,22 +57,24 @@ void SlidersGroup::createSliders()
 	projCutOff_ = addSlider(0, 3600, projCutOff, 0.1f, "Cutoff:", projectionLayout);
 	projOuterCutOff_ = addSlider(0, 3600, projOuterCutOff, 0.1f, "Outer Cutoff:", projectionLayout);
 	projectionLightColor_ = addColorButton("", projectionLightColor, projectionLayout);
-	
-	
+
+
 	setFixedWidth(300);
 }
 
-Vector3DInputWidget* SlidersGroup::addInputs(const QString & name, QVBoxLayout * layout, const QVector3D& vec) {
+Vector3DInputWidget * SlidersGroup::addInputs(const QString & name, QVBoxLayout * layout, const QVector3D & vec)
+{
 	layout->addWidget(new QLabel(name));
-	Vector3DInputWidget* widg = new Vector3DInputWidget();
+	Vector3DInputWidget * widg = new Vector3DInputWidget();
 	layout->addWidget(widg);
 	widg->setValue(vec);
 	return widg;
 }
 
-QCheckBox* SlidersGroup::addToggle(const QString & name, QVBoxLayout * layout) {
+QCheckBox * SlidersGroup::addToggle(const QString & name, QVBoxLayout * layout)
+{
 	layout->addWidget(new QLabel(name));
-	QCheckBox* widg = new QCheckBox();
+	QCheckBox * widg = new QCheckBox();
 	layout->addWidget(widg);
 	return widg;
 }
@@ -110,7 +118,7 @@ void SlidersGroup::setupLayout()
 	mainLayout->addWidget(directionGroup);
 	mainLayout->addWidget(projectionGroup);
 	mainLayout->setContentsMargins(10, 10, 10, 10);
-    mainLayout->setSpacing(5);
+	mainLayout->setSpacing(5);
 	setLayout(mainLayout);
 }
 
@@ -131,27 +139,32 @@ void SlidersGroup::connectSignals()
 	connect(morph_, &QSlider::valueChanged, this, &SlidersGroup::onMorphChanged);
 }
 
-void SlidersGroup::onMorphChanged(int value) {
+void SlidersGroup::onMorphChanged(int value)
+{
 	morph = value * 0.01f;
 	emit morphChanged(value);
 }
 
-void SlidersGroup::onCutOffClicked(int value) {
+void SlidersGroup::onCutOffClicked(int value)
+{
 	projCutOff = value * 0.1f;
 	emit cutOffClicked(value);
 }
 
-void SlidersGroup::onOuterCutOffClicked(int value) {
+void SlidersGroup::onOuterCutOffClicked(int value)
+{
 	projOuterCutOff = value * 0.1f;
 	emit outerCutOffClicked(value);
 }
 
-void SlidersGroup::onHasDirectionalClicked(bool value) {
+void SlidersGroup::onHasDirectionalClicked(bool value)
+{
 	hasDirectional = value;
 	emit hasDirectionalClicked(value);
 }
 
-void SlidersGroup::onHasProjectionClicked(bool value) {
+void SlidersGroup::onHasProjectionClicked(bool value)
+{
 	hasProjection = value;
 	emit hasProjectionClicked(value);
 }
@@ -174,7 +187,7 @@ void SlidersGroup::onSpecularChanged(int value)
 	emit specularChanged(value);
 }
 
-void SlidersGroup::onColorButtonClicked(QPushButton * button, QVector3D& color, const QString& title)
+void SlidersGroup::onColorButtonClicked(QPushButton * button, QVector3D & color, const QString & title)
 {
 	QColor currentColor = QColor::fromRgbF(color.x(), color.y(), color.z());
 	QColor newColor = QColorDialog::getColor(currentColor, this, title);
@@ -187,12 +200,12 @@ void SlidersGroup::onColorButtonClicked(QPushButton * button, QVector3D& color, 
 
 void SlidersGroup::onColorDirButtonClicked()
 {
-    onColorButtonClicked(directionalLightColor_, directionalLightColor, "Choose Color A");
-    emit colorDirButtonClicked(directionalLightColor);
+	onColorButtonClicked(directionalLightColor_, directionalLightColor, "Choose Color A");
+	emit colorDirButtonClicked(directionalLightColor);
 }
 
 void SlidersGroup::onColorProjButtonClicked()
 {
-    onColorButtonClicked(projectionLightColor_, projectionLightColor, "Choose Color B");
-    emit colorProjButtonClicked(projectionLightColor);
+	onColorButtonClicked(projectionLightColor_, projectionLightColor, "Choose Color B");
+	emit colorProjButtonClicked(projectionLightColor);
 }

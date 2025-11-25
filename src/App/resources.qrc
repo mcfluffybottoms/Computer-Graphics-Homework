@@ -1,6 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>Models/asset_1.glb</file>
         <file>Models/sbob.glb</file>
     </qresource>
     <qresource prefix="/">

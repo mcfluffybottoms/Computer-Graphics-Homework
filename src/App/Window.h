@@ -5,10 +5,9 @@
 #include <QElapsedTimer>
 #include <QMatrix4x4>
 
-#include "Camera.h"
-#include "SliderGroup.h"
 #include "InputManager.h"
 #include "SceneRenderer.h"
+#include "SliderGroup.h"
 
 #include <functional>
 #include <qopenglcontext.h>
@@ -20,7 +19,7 @@ public:
 	Window() noexcept;
 	~Window() override;
 
-public: // fgl::GLWidget
+public:// fgl::GLWidget
 	void onInit() override;
 	void onRender() override;
 	void onResize(size_t width, size_t height) override;
@@ -30,9 +29,9 @@ protected:
 	void keyReleaseEvent(QKeyEvent * event) override;
 	void mousePressEvent(QMouseEvent * event) override;
 	void mouseMoveEvent(QMouseEvent * event) override;
-	#if QT_CONFIG(wheelevent)
-		void wheelEvent(QWheelEvent *event) override;
-	#endif
+#if QT_CONFIG(wheelevent)
+	void wheelEvent(QWheelEvent * event) override;
+#endif
 private:
 	class PerfomanceMetricsGuard final
 	{
@@ -58,11 +57,11 @@ signals:
 
 private:
 	// boxes
-	void setupSliders(QVBoxLayout* layout);
-    SlidersGroup* slidersGroup_ = nullptr;
+	void setupSliders(QVBoxLayout * layout);
+	SlidersGroup * slidersGroup_ = nullptr;
 
-	const QOpenGLContext* context;
-	SceneRenderer* sceneRenderer;
+	const QOpenGLContext * context;
+	SceneRenderer * sceneRenderer;
 
 	// navigation
 	void changeCameraPerspective(float width, float height);
@@ -71,7 +70,7 @@ private:
 	QMatrix4x4 model_;
 	QVector2D lastMousePos_;
 
-	InputManager* inputManager = nullptr;
+	InputManager * inputManager = nullptr;
 	//ResourceManager* resourceManager = nullptr;
 
 	// count fps

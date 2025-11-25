@@ -4,7 +4,6 @@
 #include <QVector3D>
 #include <memory>
 #include <string>
-#include <vector>
 
 class Camera;
 class OpenGLContext;

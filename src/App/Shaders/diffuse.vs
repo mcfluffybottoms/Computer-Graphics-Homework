@@ -6,8 +6,8 @@ layout(location=2) in vec2 texCoords;
 
 uniform mat4 mvp;
 uniform mat4 model;
-uniform mat4 normalMatrix;
-uniform float sphereRadius = 1.5;
+uniform mat4 itMatrix;
+uniform float sphereRadius = 5;
 uniform float morphIntensity = 1.0;
 
 out vec3 fragPos;
@@ -17,7 +17,7 @@ out vec2 fragTexCoord;
 
 vec3 sphereCoord(float radius) {
     vec3 direction = normalize(position);
-    return direction * radius - vec3(radius, radius, radius);
+    return direction * radius;
 }
 
 vec3 reverseCoord(float radius) {
@@ -31,10 +31,10 @@ void main() {
     vec3 morphedPosition = mix(position, calcedPos, morphIntensity);
 
     vec3 sphereNormal = normalize(calcedPos);
-    vec3 morphedNormal = normalize(mix(normal, sphereNormal, morphIntensity));
+    vec3 morphedNormal = normalize(normal);
 
     fragPos = vec3(model * vec4(morphedPosition, 1.0));
-    fragNormal = mat3(transpose(inverse(model))) * morphedNormal; // better some some out of shader
+    fragNormal = mat3(itMatrix) * morphedNormal;
     fragTexCoord = texCoords;
 
     gl_Position = mvp * vec4(morphedPosition, 1.0);

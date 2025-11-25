@@ -1,7 +1,8 @@
 #include "InputManager.h"
 
-QVector2D InputManager::processKeyboardInput(const QSet<int> & pressedKeys, float deltaTime) const {
-    QVector2D moveBy{0, 0};
+QVector2D InputManager::processKeyboardInput(const QSet<int> & pressedKeys, float deltaTime) const
+{
+	QVector2D moveBy{0, 0};
 	float velocity = deltaTime;
 
 	if (pressedKeys.contains(Qt::Key_A))
@@ -23,13 +24,15 @@ QVector2D InputManager::processKeyboardInput(const QSet<int> & pressedKeys, floa
 	return moveBy;
 }
 
-QVector2D InputManager::processMouseInput(QMouseEvent * event, const QVector2D& lastMousePos_) const {
+QVector2D InputManager::processMouseInput(QMouseEvent * event, const QVector2D & lastMousePos_) const
+{
 	float xOffset = event->pos().x() - lastMousePos_.x();
 	float yOffset = lastMousePos_.y() - event->pos().y();
-    return {xOffset, yOffset};
+	return {xOffset, yOffset};
 }
 
-QVector3D InputManager::processMouseWheel(QWheelEvent * event) const {
-    float delta = (float)event->angleDelta().y() / 120.0f;
-    return {(float)event->position().x(), (float)event->position().y(), delta};
+QVector3D InputManager::processMouseWheel(QWheelEvent * event) const
+{
+	float delta = (float)event->angleDelta().y() / 120.0f;
+	return {(float)event->position().x(), (float)event->position().y(), delta};
 }

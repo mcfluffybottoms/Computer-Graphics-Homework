@@ -128,7 +128,7 @@ QVector3D Camera::getWorldCoord(float screenX, float screenY, float width, float
 	return QVector3D(wx, wy, wz);
 }
 
-void Camera::zoom(const QVector3D & mouseData, float width, float height, float dpr)
+void Camera::zoom(const QVector3D & mouseData, float width, float height, float)
 {
 
 	QVector3D before = getWorldCoord(mouseData.x(), mouseData.y(), width, height, mouseData.z());

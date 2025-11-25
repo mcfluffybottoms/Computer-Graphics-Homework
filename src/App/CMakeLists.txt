@@ -15,6 +15,9 @@ set(SRCS
     SceneRenderer.cpp
     SceneRenderer.h
 
+    Light.cpp
+    Light.h
+
     Entity.cpp
     Entity.h
 

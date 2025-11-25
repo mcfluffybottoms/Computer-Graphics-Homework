@@ -1,11 +1,11 @@
 #include "SceneRenderer.h"
 #include "App/Camera.h"
+#include "App/Light.h"
 #include "App/SliderGroup.h"
+#include <QBoxLayout>
 #include <QOpenGLFunctions>
 #include <QOpenGLShaderProgram>
-#include <iostream>
-#include <qboxlayout.h>
-#include <qmath.h>
+
 SceneRenderer::SceneRenderer(OpenGLContextPtr context)
 	: context_(context)
 {
@@ -35,65 +35,37 @@ bool SceneRenderer::setShaders()
 
 void SceneRenderer::initUniformValues()
 {
-	// Uniform values for shader
-	entityModel->mvpUniform_ = program_->uniformLocation("mvp");
-	entityModel->modelUniform_ = program_->uniformLocation("model");
-	entityModel->normalMatrixUniform_ = program_->uniformLocation("normalMatrix");
-
-	uniformAmbient_ = program_->uniformLocation("ambient");
-	uniformDiffuse_ = program_->uniformLocation("diffuse");
-	uniformSpecular_ = program_->uniformLocation("specular");
-
-	uniformLightPosition_ = program_->uniformLocation("lightPos");
-	uniformLightColor_ = program_->uniformLocation("lightColor");
-
-	uniformProjLightPosition_ = program_->uniformLocation("projLightPos");
-	uniformProjLightColor_ = program_->uniformLocation("projLightColor");
-
-	uniformProjCutOff_ = program_->uniformLocation("projCutOff");
-	uniformProjOuterCutOff_ = program_->uniformLocation("projOuterCutOff");
-	uniformProjLightDir_ = program_->uniformLocation("projLightDir");
+	if (entityModel)
+	{
+		entityModel->mvpUniform_ = program_->uniformLocation("mvp");
+		entityModel->modelUniform_ = program_->uniformLocation("model");
+		entityModel->invertedTransposedMatrixUniform_ = program_->uniformLocation("itMatrix");
+	}
 
 	uniformDirectional_ = program_->uniformLocation("hasDirectional");
 	uniformProjection_ = program_->uniformLocation("hasProjection");
-
 	uniformViewPos_ = program_->uniformLocation("viewPos");
-
 	uniformMorph_ = program_->uniformLocation("morphIntensity");
 }
 
-void SceneRenderer::setUniformValues(const QMatrix4x4 & mvp, const QVector3D& lightPosition_,
-									 const QVector3D& lightColor_,
-									 const QVector3D& projLightPosition_,
-									 const QVector3D& projLightColor_,
-									 const QVector3D& projLightDirection_,
-									 float projCutOff_,
-									 float projOuterCutOff_,
+void SceneRenderer::initLights()
+{
+	dirLight = new DirectionalLight(program_, 0);
+	projLight = new ProjectionLight(program_, 0);
+}
 
-									 float ambient_,
-									 float diffuse_,
-									 float specular_,
-
+void SceneRenderer::setUniformValues(const QMatrix4x4 & mvp,
 									 bool directional_,
 									 bool projection_,
 									 float morph)
 {
-	program_->setUniformValue(entityModel->mvpUniform_, mvp);
-	program_->setUniformValue(uniformAmbient_, ambient_);
-	program_->setUniformValue(uniformDiffuse_, diffuse_);
-	program_->setUniformValue(uniformSpecular_, specular_);
-	program_->setUniformValue(uniformLightColor_, lightColor_.x(), lightColor_.y(), lightColor_.z());
-	program_->setUniformValue(uniformLightPosition_, lightPosition_.x(), lightPosition_.y(), lightPosition_.z());
-	program_->setUniformValue(uniformProjLightPosition_, projLightPosition_.x(), projLightPosition_.y(), projLightPosition_.z());
-	program_->setUniformValue(uniformProjLightColor_, projLightColor_);
-	program_->setUniformValue(uniformProjLightDir_, projLightDirection_.normalized());
-	program_->setUniformValue(uniformProjCutOff_, std::cos(qDegreesToRadians(projCutOff_)));
-	program_->setUniformValue(uniformProjOuterCutOff_, std::cos(qDegreesToRadians(projOuterCutOff_)));
+	if (entityModel)
+		program_->setUniformValue(entityModel->mvpUniform_, mvp);
+
 	program_->setUniformValue(uniformDirectional_, directional_);
 	program_->setUniformValue(uniformProjection_, projection_);
-	program_->setUniformValue(uniformViewPos_, camera->position());
-
 	program_->setUniformValue(uniformMorph_, morph);
+	program_->setUniformValue(uniformViewPos_, camera->position());
 }
 
 
@@ -109,6 +81,7 @@ bool SceneRenderer::onInit(fgl::GLWidget * window)
 	entityModel->setPosition(QVector3D(0.0f, 0.0f, -1.0f));
 
 	initUniformValues();
+	initLights();
 
 	entityModel->setImportedModel(":/Models/sbob.glb");
 
@@ -129,20 +102,34 @@ bool SceneRenderer::onRender(SlidersGroup * window, const QMatrix4x4 & mvp)
 	context_->functions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	program_->bind();
 
-	setUniformValues(mvp, window->getVector(1),
-						window->directionalLightColor,
-						window->getVector(2),
-						window->projectionLightColor,
-						camera->y(),
-						window->projCutOff,
-						window->projOuterCutOff,
-						window->ambient,
-						window->diffuse,
-						window->specular,
-						window->hasDirectional,
-						window->hasProjection,
-						 window->morph
-	);
+
+	setUniformValues(mvp,
+					 window->hasDirectional,
+					 window->hasProjection,
+					 window->morph);
+
+	if (dirLight)
+	{
+		dirLight->setUniformValues(
+			window->getVector(1),
+			window->directionalLightColor,
+			window->ambient,
+			window->diffuse,
+			window->specular, program_);
+	}
+
+	if (projLight)
+	{
+		projLight->setUniformValues(
+			window->getVector(2),
+			window->projectionLightColor,
+			camera->y(),
+			window->ambient,
+			window->diffuse,
+			window->specular,
+			window->projCutOff,
+			window->projOuterCutOff, program_);
+	}
 
 	entityModel->render(mvp, context_);
 
