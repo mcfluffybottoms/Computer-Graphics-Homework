@@ -58,6 +58,8 @@ void SceneRenderer::initUniformValues()
 	uniformProjection_ = program_->uniformLocation("hasProjection");
 
 	uniformViewPos_ = program_->uniformLocation("viewPos");
+
+	uniformMorph_ = program_->uniformLocation("morphIntensity");
 }
 
 void SceneRenderer::setUniformValues(const QMatrix4x4 & mvp, const QVector3D& lightPosition_,
@@ -73,7 +75,8 @@ void SceneRenderer::setUniformValues(const QMatrix4x4 & mvp, const QVector3D& li
 									 float specular_,
 
 									 bool directional_,
-									 bool projection_)
+									 bool projection_,
+									 float morph)
 {
 	program_->setUniformValue(entityModel->mvpUniform_, mvp);
 	program_->setUniformValue(uniformAmbient_, ambient_);
@@ -89,6 +92,8 @@ void SceneRenderer::setUniformValues(const QMatrix4x4 & mvp, const QVector3D& li
 	program_->setUniformValue(uniformDirectional_, directional_);
 	program_->setUniformValue(uniformProjection_, projection_);
 	program_->setUniformValue(uniformViewPos_, camera->position());
+
+	program_->setUniformValue(uniformMorph_, morph);
 }
 
 
@@ -105,7 +110,7 @@ bool SceneRenderer::onInit(fgl::GLWidget * window)
 
 	initUniformValues();
 
-	entityModel->setImportedModel(":/Models/asset_1.glb");
+	entityModel->setImportedModel(":/Models/sbob.glb");
 
 	// Еnable depth test and face culling
 	f->glEnable(GL_DEPTH_TEST);
@@ -124,9 +129,9 @@ bool SceneRenderer::onRender(SlidersGroup * window, const QMatrix4x4 & mvp)
 	context_->functions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	program_->bind();
 
-	setUniformValues(mvp, window->directionalLightPosition,
+	setUniformValues(mvp, window->getVector(1),
 						window->directionalLightColor,
-						window->projectionLightPosition,
+						window->getVector(2),
 						window->projectionLightColor,
 						camera->y(),
 						window->projCutOff,
@@ -135,7 +140,8 @@ bool SceneRenderer::onRender(SlidersGroup * window, const QMatrix4x4 & mvp)
 						window->diffuse,
 						window->specular,
 						window->hasDirectional,
-						window->hasProjection
+						window->hasProjection,
+						 window->morph
 	);
 
 	entityModel->render(mvp, context_);

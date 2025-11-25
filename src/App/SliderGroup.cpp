@@ -29,6 +29,9 @@ QVector3D SlidersGroup::getVector(int vec_name) {
 void SlidersGroup::createSliders()
 {
 
+	// morph 
+	morphLayout = new QVBoxLayout(morphGroup);
+	morph_ = addSlider(0, 100, morph, 0.01, "Morph intensity", morphLayout);
 	// positions
 	lightLayout = new QVBoxLayout(lightGroup);
 	diffuse_ = addSlider(0, 100, diffuse, 0.01f, "Diffuse:", lightLayout);
@@ -38,13 +41,13 @@ void SlidersGroup::createSliders()
 	// colors
 	directionLayout = new QVBoxLayout(directionGroup);
 	hasDirectional_ = addToggle("Has Directional", directionLayout);
-	directionalLightPosition_ = addInputs("Light Position", directionLayout);
+	directionalLightPosition_ = addInputs("Light Position", directionLayout, directionalLightPosition);
 	directionalLightColor_ = addColorButton("", directionalLightColor, directionLayout);
 	
 	projectionLayout = new QVBoxLayout(projectionGroup);
 	hasProjection_ = addToggle("Has Projector", projectionLayout);
-	projectionLightDirection_ = addInputs("Light Direction", projectionLayout);
-	projectionLightPosition_ = addInputs("Light Position", projectionLayout);
+	//projectionLightDirection_ = addInputs("Light Direction", projectionLayout, projectionLightDir);
+	projectionLightPosition_ = addInputs("Light Position", projectionLayout, projectionLightPosition);
 	projCutOff_ = addSlider(0, 3600, projCutOff, 0.1f, "Cutoff:", projectionLayout);
 	projOuterCutOff_ = addSlider(0, 3600, projOuterCutOff, 0.1f, "Outer Cutoff:", projectionLayout);
 	projectionLightColor_ = addColorButton("", projectionLightColor, projectionLayout);
@@ -53,10 +56,11 @@ void SlidersGroup::createSliders()
 	setFixedWidth(300);
 }
 
-Vector3DInputWidget* SlidersGroup::addInputs(const QString & name, QVBoxLayout * layout) {
+Vector3DInputWidget* SlidersGroup::addInputs(const QString & name, QVBoxLayout * layout, const QVector3D& vec) {
 	layout->addWidget(new QLabel(name));
 	Vector3DInputWidget* widg = new Vector3DInputWidget();
 	layout->addWidget(widg);
+	widg->setValue(vec);
 	return widg;
 }
 
@@ -101,6 +105,7 @@ void SlidersGroup::setupLayout()
 {
 	this->setStyleSheet("background-color: lightblue;");
 	mainLayout = new QVBoxLayout();
+	mainLayout->addWidget(morphGroup);
 	mainLayout->addWidget(lightGroup);
 	mainLayout->addWidget(directionGroup);
 	mainLayout->addWidget(projectionGroup);
@@ -123,6 +128,12 @@ void SlidersGroup::connectSignals()
 	connect(projCutOff_, &QSlider::valueChanged, this, &SlidersGroup::onCutOffClicked);
 	connect(projOuterCutOff_, &QSlider::valueChanged, this, &SlidersGroup::onOuterCutOffClicked);
 
+	connect(morph_, &QSlider::valueChanged, this, &SlidersGroup::onMorphChanged);
+}
+
+void SlidersGroup::onMorphChanged(int value) {
+	morph = value * 0.01f;
+	emit morphChanged(value);
 }
 
 void SlidersGroup::onCutOffClicked(int value) {

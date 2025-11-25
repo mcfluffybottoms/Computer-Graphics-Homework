@@ -20,6 +20,7 @@ public:
     float ambient = 1.0f;
 	float diffuse = 1.0f;
     float specular = 1.0f;
+    float morph = 0.0f;
     QVector3D directionalLightColor = QVector3D(0.5f, 0.5f, 0.5f);
     QVector3D projectionLightColor = QVector3D(0.5f, 0.5f, 0.5f);
 
@@ -46,6 +47,7 @@ signals:
     void hasProjectionClicked(bool value);
     void cutOffClicked(int value);
     void outerCutOffClicked(int value);
+    void morphChanged(int value);
 
 private slots:
     void onAmbientChanged(int value);
@@ -53,6 +55,8 @@ private slots:
     void onSpecularChanged(int value);
     void onColorDirButtonClicked();
     void onColorProjButtonClicked();
+
+    void onMorphChanged(int value);
 
     void onHasDirectionalClicked(bool value);
     void onHasProjectionClicked(bool value);
@@ -66,7 +70,7 @@ private:
 
     QSlider * addSlider(int min, int max, float current, float step, const QString& name, QBoxLayout* layout) const;
     QPushButton * addColorButton(const QString & text, const QVector3D & color, QBoxLayout * layout) const;
-    Vector3DInputWidget* addInputs(const QString & name, QVBoxLayout * layout);
+    Vector3DInputWidget* addInputs(const QString & name, QVBoxLayout * layout, const QVector3D& vec);
     QCheckBox* addToggle(const QString & name, QVBoxLayout * layout);
     
     void updateColorButton(QPushButton * button, const QColor & color) const;
@@ -78,6 +82,7 @@ private:
     QSlider * ambient_;
 	QSlider * diffuse_;
     QSlider * specular_;
+    QSlider * morph_;
     QPushButton * directionalLightColor_;
 	QPushButton * projectionLightColor_;
     Vector3DInputWidget* directionalLightPosition_;
@@ -94,8 +99,10 @@ private:
     QGroupBox* lightGroup = new QGroupBox("Light Parameters");
     QGroupBox* directionGroup = new QGroupBox("Direction Light Parameters");
     QGroupBox* projectionGroup = new QGroupBox("Projection Light Parameters");
+    QGroupBox* morphGroup = new QGroupBox("Morph Parameters");
     QVBoxLayout * lightLayout;
     QVBoxLayout * directionLayout;
     QVBoxLayout * projectionLayout;
+    QVBoxLayout * morphLayout;
     QLayout * mainLayout;
 };

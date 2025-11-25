@@ -34,7 +34,8 @@ struct SceneRenderer {
 						  float specular_,
 
 						  bool directional_,
-						  bool projection_);
+						  bool projection_,
+						  float morph);
 
 	void rotateObj(const QVector2D & rotation);
 
@@ -64,6 +65,8 @@ private:
 
 	bool directional_ = true;
 	bool projection_ = true;
+
+	GLfloat uniformMorph_ = 0.0f;
 
 	GLint uniformLightPosition_ = 1.0f;
 	GLint uniformLightColor_ = 1.0f;
