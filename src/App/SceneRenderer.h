@@ -25,7 +25,8 @@ struct SceneRenderer {
 	void setUniformValues(const QMatrix4x4 & mvp,
 						  bool directional_,
 						  bool projection_,
-						  float morph);
+						  float morph, 
+						  float radius);
 
 	void rotateObj(const QVector2D & rotation);
 
@@ -46,21 +47,9 @@ private:
 	EntityModel * entityModel = nullptr;
 
 	GLfloat uniformMorph_ = 0.0f;
+	GLfloat uniformRadius_ = 1.0f;
 	GLboolean uniformDirectional_ = true;
 	GLboolean uniformProjection_ = true;
 
 	GLint uniformViewPos_ = 1.0f;
-	// GLint uniformLightPosition_ = 1.0f;
-	// GLint uniformLightColor_ = 1.0f;
-
-	// GLint uniformProjLightPosition_ = 1.0f;
-	// GLint uniformProjLightColor_ = 1.0f;
-	// GLint uniformProjCutOff_ = 1.0f;
-	// GLint uniformProjOuterCutOff_ = 1.0f;
-	// GLint uniformProjLightDir_ = 1.0f;
-
-	// GLint uniformViewPos_ = 1.0f;
-	// GLfloat uniformAmbient_ = 1.0f;
-	// GLfloat uniformDiffuse_ = 1.0f;
-	// GLfloat uniformSpecular_ = 1.0f;
 };

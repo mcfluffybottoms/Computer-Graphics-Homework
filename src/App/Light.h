@@ -1,6 +1,5 @@
 #pragma once
 
-#include <GL/gl.h>
 #include <QMatrix4x4>
 #include <QOpenGLShaderProgram>
 #include <QVector3D>

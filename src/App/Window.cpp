@@ -10,7 +10,7 @@
 #include <QOpenGLShaderProgram>
 #include <QScreen>
 #include <QVBoxLayout>
-
+#include <iostream>
 #include <QMatrix4x4>
 #include <QOpenGLContext>
 
@@ -88,9 +88,9 @@ void Window::onInit()
 	sceneRenderer->onInit(this);
 	// Camera
 	sceneRenderer->camera = new Camera();
-	sceneRenderer->camera->position().setX(0);
-	sceneRenderer->camera->position().setY(0);
-	sceneRenderer->camera->position().setZ(1);
+	sceneRenderer->camera->position().setX(0.0415709);
+	sceneRenderer->camera->position().setY(-0.0718041);
+	sceneRenderer->camera->position().setZ(20);
 	changeCameraPerspective((float)width(), (float)height());
 }
 

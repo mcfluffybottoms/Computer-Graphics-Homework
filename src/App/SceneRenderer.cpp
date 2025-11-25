@@ -45,6 +45,7 @@ void SceneRenderer::initUniformValues()
 	uniformDirectional_ = program_->uniformLocation("hasDirectional");
 	uniformProjection_ = program_->uniformLocation("hasProjection");
 	uniformViewPos_ = program_->uniformLocation("viewPos");
+	uniformRadius_ = program_->uniformLocation("sphereRadius");
 	uniformMorph_ = program_->uniformLocation("morphIntensity");
 }
 
@@ -57,7 +58,8 @@ void SceneRenderer::initLights()
 void SceneRenderer::setUniformValues(const QMatrix4x4 & mvp,
 									 bool directional_,
 									 bool projection_,
-									 float morph)
+									 float morph,
+									 float radius)
 {
 	if (entityModel)
 		program_->setUniformValue(entityModel->mvpUniform_, mvp);
@@ -65,6 +67,7 @@ void SceneRenderer::setUniformValues(const QMatrix4x4 & mvp,
 	program_->setUniformValue(uniformDirectional_, directional_);
 	program_->setUniformValue(uniformProjection_, projection_);
 	program_->setUniformValue(uniformMorph_, morph);
+	program_->setUniformValue(uniformRadius_, radius);
 	program_->setUniformValue(uniformViewPos_, camera->position());
 }
 
@@ -79,6 +82,7 @@ bool SceneRenderer::onInit(fgl::GLWidget * window)
 	entityModel = new EntityModel(program_);
 	entityModel->setScale(QVector3D(0.1f, 0.1f, 0.1f));
 	entityModel->setPosition(QVector3D(0.0f, 0.0f, -1.0f));
+	entityModel->setRotation({180.0f, 180.0f, 0.0f});
 
 	initUniformValues();
 	initLights();
@@ -106,7 +110,7 @@ bool SceneRenderer::onRender(SlidersGroup * window, const QMatrix4x4 & mvp)
 	setUniformValues(mvp,
 					 window->hasDirectional,
 					 window->hasProjection,
-					 window->morph);
+					 window->morph, window->circleRadius);
 
 	if (dirLight)
 	{
@@ -124,9 +128,9 @@ bool SceneRenderer::onRender(SlidersGroup * window, const QMatrix4x4 & mvp)
 			window->getVector(2),
 			window->projectionLightColor,
 			camera->y(),
-			window->ambient,
-			window->diffuse,
-			window->specular,
+			window->ambientP,
+			window->diffuseP,
+			window->specularP,
 			window->projCutOff,
 			window->projOuterCutOff, program_);
 	}

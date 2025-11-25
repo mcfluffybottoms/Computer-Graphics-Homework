@@ -116,20 +116,6 @@ std::vector<std::unique_ptr<QOpenGLTexture>> EntityModel::loadTextures(const tin
 		}
 	}
 
-	for (size_t i = 0; i < textures_.size(); ++i)
-	{
-		if (textures_[i])
-		{
-			qDebug() << "Texture" << i
-					 << "ID:" << textures_[i]->textureId()
-					 << "Created:" << textures_[i]->isCreated()
-					 << "Size:" << textures_[i]->width() << "x" << textures_[i]->height();
-		}
-		else
-		{
-			qDebug() << "Texture" << i << "is null";
-		}
-	}
 	return textures_;
 }
 
@@ -141,8 +127,7 @@ std::vector<ModelMesh> EntityModel::loadMeshes(const tinygltf::Model & model)
 		for (const auto & primitive: mesh.primitives)
 		{
 			ModelMesh meshData;
-			// std::cout << primitive.indices << "\n";
-			// filling vertices
+
 			for (const auto & attributeName: {"POSITION", "NORMAL", "TEXCOORD_0"})
 			{
 				if (primitive.attributes.count(attributeName) == 0)
@@ -221,7 +206,6 @@ std::vector<ModelMesh> EntityModel::loadMeshes(const tinygltf::Model & model)
 					meshData.textureIndex = material.pbrMetallicRoughness.baseColorTexture.index;
 				}
 			}
-			std::cout << meshData.textureIndex << "\n";
 			meshes_.push_back(std::move(meshData));
 		}
 	}

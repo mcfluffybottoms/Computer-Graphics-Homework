@@ -128,15 +128,10 @@ QVector3D Camera::getWorldCoord(float screenX, float screenY, float width, float
 	return QVector3D(wx, wy, wz);
 }
 
-void Camera::zoom(const QVector3D & mouseData, float width, float height, float)
+void Camera::zoom(const QVector3D & mouseData, float, float, float)
 {
 
-	QVector3D before = getWorldCoord(mouseData.x(), mouseData.y(), width, height, mouseData.z());
-	fov_ = fov_ * std::pow(1.1f, -mouseData.z());
-	setToPerspective(fov_, width / height, nearPlane_, farPlane_);
-	QVector3D after = getWorldCoord(mouseData.x(), mouseData.y(), width, height, mouseData.z());
-	QVector3D delta = before - after;
-	position_ += delta;
+	position_.setZ(position_.z() - mouseData.z());
 	updateCameraVectors();
 }
 

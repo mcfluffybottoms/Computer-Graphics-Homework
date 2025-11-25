@@ -20,7 +20,13 @@ public:
 	float ambient = 1.0f;
 	float diffuse = 1.0f;
 	float specular = 1.0f;
+
+	float ambientP = 1.0f;
+	float diffuseP = 1.0f;
+	float specularP = 1.0f;
+
 	float morph = 0.0f;
+	float circleRadius = 1.0f;
 	QVector3D directionalLightColor = QVector3D(0.5f, 0.5f, 0.5f);
 	QVector3D projectionLightColor = QVector3D(0.5f, 0.5f, 0.5f);
 
@@ -41,6 +47,9 @@ signals:
 	void ambientChanged(int value);
 	void diffuseChanged(int value);
 	void specularChanged(int value);
+	void ambientPChanged(int value);
+	void diffusePChanged(int value);
+	void specularPChanged(int value);
 	void colorDirButtonClicked(const QVector3D & value);
 	void colorProjButtonClicked(const QVector3D & value);
 	void hasDirectionalClicked(bool value);
@@ -48,11 +57,15 @@ signals:
 	void cutOffClicked(int value);
 	void outerCutOffClicked(int value);
 	void morphChanged(int value);
+	void radiusChanged(int value);
 
 private slots:
 	void onAmbientChanged(int value);
 	void onDiffuseChanged(int value);
 	void onSpecularChanged(int value);
+	void onAmbientPChanged(int value);
+	void onDiffusePChanged(int value);
+	void onSpecularPChanged(int value);
 	void onColorDirButtonClicked();
 	void onColorProjButtonClicked();
 
@@ -63,6 +76,8 @@ private slots:
 
 	void onCutOffClicked(int value);
 	void onOuterCutOffClicked(int value);
+
+	void onRadiusChanged(int value);
 
 private:
 	void createSliders();
@@ -84,6 +99,12 @@ private:
 	QSlider * diffuse_;
 	QSlider * specular_;
 	QSlider * morph_;
+
+	QSlider * ambientP_;
+	QSlider * diffuseP_;
+	QSlider * specularP_;
+	QSlider * circleRadius_;
+
 	QPushButton * directionalLightColor_;
 	QPushButton * projectionLightColor_;
 	Vector3DInputWidget * directionalLightPosition_;
@@ -97,7 +118,6 @@ private:
 	QCheckBox * hasProjection_;
 
 	// layouts
-	QGroupBox * lightGroup = new QGroupBox("Light Parameters");
 	QGroupBox * directionGroup = new QGroupBox("Direction Light Parameters");
 	QGroupBox * projectionGroup = new QGroupBox("Projection Light Parameters");
 	QGroupBox * morphGroup = new QGroupBox("Morph Parameters");

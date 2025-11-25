@@ -38,17 +38,17 @@ void SlidersGroup::createSliders()
 	// morph
 	morphLayout = new QVBoxLayout(morphGroup);
 	morph_ = addSlider(0, 100, morph, 0.01, "Morph intensity", morphLayout);
+	circleRadius_ = addSlider(0, 1000, ambientP, 0.01f, "Radius:", morphLayout);
 	// positions
-	lightLayout = new QVBoxLayout(lightGroup);
-	diffuse_ = addSlider(0, 100, diffuse, 0.01f, "Diffuse:", lightLayout);
-	specular_ = addSlider(0, 100, specular, 0.01f, "Specular:", lightLayout);
-	ambient_ = addSlider(0, 100, ambient, 0.01f, "Ambient:", lightLayout);
-
+	
 	// colors
 	directionLayout = new QVBoxLayout(directionGroup);
 	hasDirectional_ = addToggle("Has Directional", directionLayout);
 	directionalLightPosition_ = addInputs("Light Position", directionLayout, directionalLightPosition);
 	directionalLightColor_ = addColorButton("", directionalLightColor, directionLayout);
+	diffuse_ = addSlider(0, 100, diffuse, 0.01f, "Diffuse:", directionLayout);
+	specular_ = addSlider(0, 100, specular, 0.01f, "Specular:", directionLayout);
+	ambient_ = addSlider(0, 100, ambient, 0.01f, "Ambient:", directionLayout);
 
 	projectionLayout = new QVBoxLayout(projectionGroup);
 	hasProjection_ = addToggle("Has Projector", projectionLayout);
@@ -57,8 +57,9 @@ void SlidersGroup::createSliders()
 	projCutOff_ = addSlider(0, 3600, projCutOff, 0.1f, "Cutoff:", projectionLayout);
 	projOuterCutOff_ = addSlider(0, 3600, projOuterCutOff, 0.1f, "Outer Cutoff:", projectionLayout);
 	projectionLightColor_ = addColorButton("", projectionLightColor, projectionLayout);
-
-
+	diffuseP_ = addSlider(0, 100, diffuseP, 0.01f, "Diffuse:", projectionLayout);
+	specularP_ = addSlider(0, 100, specularP, 0.01f, "Specular:", projectionLayout);
+	ambientP_ = addSlider(0, 100, ambientP, 0.01f, "Ambient:", projectionLayout);
 	setFixedWidth(300);
 }
 
@@ -114,7 +115,6 @@ void SlidersGroup::setupLayout()
 	this->setStyleSheet("background-color: lightblue;");
 	mainLayout = new QVBoxLayout();
 	mainLayout->addWidget(morphGroup);
-	mainLayout->addWidget(lightGroup);
 	mainLayout->addWidget(directionGroup);
 	mainLayout->addWidget(projectionGroup);
 	mainLayout->setContentsMargins(10, 10, 10, 10);
@@ -127,6 +127,11 @@ void SlidersGroup::connectSignals()
 	connect(ambient_, &QSlider::valueChanged, this, &SlidersGroup::onAmbientChanged);
 	connect(diffuse_, &QSlider::valueChanged, this, &SlidersGroup::onDiffuseChanged);
 	connect(specular_, &QSlider::valueChanged, this, &SlidersGroup::onSpecularChanged);
+
+	connect(ambientP_, &QSlider::valueChanged, this, &SlidersGroup::onAmbientPChanged);
+	connect(diffuseP_, &QSlider::valueChanged, this, &SlidersGroup::onDiffusePChanged);
+	connect(specularP_, &QSlider::valueChanged, this, &SlidersGroup::onSpecularPChanged);
+
 	connect(directionalLightColor_, &QPushButton::clicked, this, &SlidersGroup::onColorDirButtonClicked);
 	connect(projectionLightColor_, &QPushButton::clicked, this, &SlidersGroup::onColorProjButtonClicked);
 
@@ -137,6 +142,13 @@ void SlidersGroup::connectSignals()
 	connect(projOuterCutOff_, &QSlider::valueChanged, this, &SlidersGroup::onOuterCutOffClicked);
 
 	connect(morph_, &QSlider::valueChanged, this, &SlidersGroup::onMorphChanged);
+
+	connect(circleRadius_, &QSlider::valueChanged, this, &SlidersGroup::onRadiusChanged);
+}
+
+void SlidersGroup::onRadiusChanged(int value) {
+	circleRadius = value * 0.01f;
+	emit morphChanged(value);
 }
 
 void SlidersGroup::onMorphChanged(int value)
@@ -182,6 +194,24 @@ void SlidersGroup::onDiffuseChanged(int value)
 }
 
 void SlidersGroup::onSpecularChanged(int value)
+{
+	specularP = (float)value * 0.01f;
+	emit specularPChanged(value);
+}
+
+void SlidersGroup::onAmbientPChanged(int value)
+{
+	ambientP = (float)value * 0.01f;
+	emit ambientPChanged(value);
+}
+
+void SlidersGroup::onDiffusePChanged(int value)
+{
+	diffuseP = (float)value * 0.01f;
+	emit diffusePChanged(value);
+}
+
+void SlidersGroup::onSpecularPChanged(int value)
 {
 	specular = (float)value * 0.01f;
 	emit specularChanged(value);
