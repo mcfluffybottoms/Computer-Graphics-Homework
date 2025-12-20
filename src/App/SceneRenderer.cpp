@@ -25,11 +25,30 @@ SceneRenderer::~SceneRenderer()
 
 bool SceneRenderer::setShaders()
 {
-	program_ = std::make_shared<QOpenGLShaderProgram>();
-	program_->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/diffuse.vs");
-	program_->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment,
-											   ":/Shaders/diffuse.fs");
-	program_->link();
+	// geometry
+	m_geometry_program_ = std::make_shared<QOpenGLShaderProgram>();
+	m_geometry_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/phonglight.vs");
+	m_geometry_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment,
+											   ":/Shaders/phonglight.fs");
+	m_geometry_program_->link();
+	// ambient occlusion
+	m_ao_program_ = std::make_shared<QOpenGLShaderProgram>();
+	m_ao_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/phonglight.vs");
+	m_ao_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment,
+											   ":/Shaders/phonglight.fs");
+	m_ao_program_->link();
+	// blur
+	m_blur_program_ = std::make_shared<QOpenGLShaderProgram>();
+	m_blur_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/phonglight.vs");
+	m_blur_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment,
+											   ":/Shaders/phonglight.fs");
+	m_blur_program_->link();
+	// lighting
+	m_lighting_program_ = std::make_shared<QOpenGLShaderProgram>();
+	m_lighting_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/phonglight.vs");
+	m_lighting_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment,
+											   ":/Shaders/phonglight.fs");
+	m_lighting_program_->link();
 	return true;
 }
 
@@ -37,37 +56,28 @@ void SceneRenderer::initUniformValues()
 {
 	if (entityModel)
 	{
-		entityModel->mvpUniform_ = program_->uniformLocation("mvp");
-		entityModel->modelUniform_ = program_->uniformLocation("model");
-		entityModel->invertedTransposedMatrixUniform_ = program_->uniformLocation("itMatrix");
+		entityModel->mvpUniform_ = m_geometry_program_->uniformLocation("mvp");
+		entityModel->modelUniform_ = m_geometry_program_->uniformLocation("model");
+		entityModel->invertedTransposedMatrixUniform_ = m_geometry_program_->uniformLocation("itMatrix");
 	}
-
-	uniformDirectional_ = program_->uniformLocation("hasDirectional");
-	uniformProjection_ = program_->uniformLocation("hasProjection");
-	uniformViewPos_ = program_->uniformLocation("viewPos");
-	uniformRadius_ = program_->uniformLocation("sphereRadius");
-	uniformMorph_ = program_->uniformLocation("morphIntensity");
+	uniformViewPos_ = m_geometry_program_->uniformLocation("viewPos");
 }
 
 void SceneRenderer::initLights()
 {
-	dirLight = new DirectionalLight(program_, 0);
-	projLight = new ProjectionLight(program_, 0);
+	dirLight = new DirectionalLight(m_lighting_program_, 0);
+	projLight = new ProjectionLight(m_lighting_program_, 0);
 }
 
 void SceneRenderer::setUniformValues(const QMatrix4x4 & mvp,
 									 bool directional_,
-									 bool projection_,
-									 float morph,
-									 float radius)
+									 bool projection_)
 {
 	if (entityModel)
 		program_->setUniformValue(entityModel->mvpUniform_, mvp);
 
 	program_->setUniformValue(uniformDirectional_, directional_);
 	program_->setUniformValue(uniformProjection_, projection_);
-	program_->setUniformValue(uniformMorph_, morph);
-	program_->setUniformValue(uniformRadius_, radius);
 	program_->setUniformValue(uniformViewPos_, camera->position());
 }
 
@@ -100,40 +110,45 @@ bool SceneRenderer::onInit(fgl::GLWidget * window)
 	return true;
 }
 
+bool SceneRenderer::geometryPass(const QMatrix4x4 & mvp) {
+	m_geometry_program_->bind();
+	
+	context_->functions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	
+	// set uniform values in shader
+	m_geometry_program_->setUniformValue(entityModel->mvpUniform_, mvp);
+
+}
+
 bool SceneRenderer::onRender(SlidersGroup * window, const QMatrix4x4 & mvp)
 {
 	// Clear buffers
-	context_->functions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	program_->bind();
+	//context_->functions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//program_->bind();
+	geometryPass(mvp);
 
+	// if (dirLight)
+	// {
+	// 	dirLight->setUniformValues(
+	// 		window->getVector(1),
+	// 		window->directionalLightColor,
+	// 		window->ambient,
+	// 		window->diffuse,
+	// 		window->specular, program_);
+	// }
 
-	setUniformValues(mvp,
-					 window->hasDirectional,
-					 window->hasProjection,
-					 window->morph, window->circleRadius);
-
-	if (dirLight)
-	{
-		dirLight->setUniformValues(
-			window->getVector(1),
-			window->directionalLightColor,
-			window->ambient,
-			window->diffuse,
-			window->specular, program_);
-	}
-
-	if (projLight)
-	{
-		projLight->setUniformValues(
-			window->getVector(2),
-			window->projectionLightColor,
-			camera->y(),
-			window->ambientP,
-			window->diffuseP,
-			window->specularP,
-			window->projCutOff,
-			window->projOuterCutOff, program_);
-	}
+	// if (projLight)
+	// {
+	// 	projLight->setUniformValues(
+	// 		window->getVector(2),
+	// 		window->projectionLightColor,
+	// 		camera->y(),
+	// 		window->ambientP,
+	// 		window->diffuseP,
+	// 		window->specularP,
+	// 		window->projCutOff,
+	// 		window->projOuterCutOff, program_);
+	// }
 
 	entityModel->render(mvp, context_);
 

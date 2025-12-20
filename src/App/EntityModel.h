@@ -4,12 +4,14 @@
 #include "OpenGLContext.h"
 #include "Resources.h"
 #include <QOpenGLBuffer>
+#include <QOpenGLFramebufferObject>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLVertexArrayObject>
 #include <tinygltf/tiny_gltf.h>
 
+
 struct EntityModel : public Entity {
-	EntityModel(std::shared_ptr<QOpenGLShaderProgram> program);
+	EntityModel(std::shared_ptr<QOpenGLShaderProgram> program1, std::shared_ptr<QOpenGLShaderProgram> program2, std::shared_ptr<QOpenGLShaderProgram> program3, std::shared_ptr<QOpenGLShaderProgram> program4);
 
 	bool setShaders();
 	void setUniformValues(const QMatrix4x4 & mvp);
@@ -35,5 +37,10 @@ private:
 	std::vector<std::unique_ptr<QOpenGLBuffer>> vbos_;
 	std::vector<std::unique_ptr<QOpenGLBuffer>> ibos_;
 	std::vector<std::unique_ptr<QOpenGLVertexArrayObject>> vaos_;
-	std::shared_ptr<QOpenGLShaderProgram> program_;
+
+	// shader setup
+	std::shared_ptr<QOpenGLShaderProgram> m_geometry_program_;
+	std::shared_ptr<QOpenGLShaderProgram> m_ao_program_;
+	std::shared_ptr<QOpenGLShaderProgram> m_blur_program_;
+	std::shared_ptr<QOpenGLShaderProgram> m_lighting_program_;
 };

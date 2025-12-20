@@ -34,13 +34,6 @@ QVector3D SlidersGroup::getVector(int vec_name)
 
 void SlidersGroup::createSliders()
 {
-
-	// morph
-	morphLayout = new QVBoxLayout(morphGroup);
-	morph_ = addSlider(0, 100, morph, 0.01, "Morph intensity", morphLayout);
-	circleRadius_ = addSlider(0, 1000, ambientP, 0.01f, "Radius:", morphLayout);
-	// positions
-	
 	// colors
 	directionLayout = new QVBoxLayout(directionGroup);
 	hasDirectional_ = addToggle("Has Directional", directionLayout);
@@ -114,7 +107,6 @@ void SlidersGroup::setupLayout()
 {
 	this->setStyleSheet("background-color: lightblue;");
 	mainLayout = new QVBoxLayout();
-	mainLayout->addWidget(morphGroup);
 	mainLayout->addWidget(directionGroup);
 	mainLayout->addWidget(projectionGroup);
 	mainLayout->setContentsMargins(10, 10, 10, 10);
@@ -140,10 +132,6 @@ void SlidersGroup::connectSignals()
 
 	connect(projCutOff_, &QSlider::valueChanged, this, &SlidersGroup::onCutOffClicked);
 	connect(projOuterCutOff_, &QSlider::valueChanged, this, &SlidersGroup::onOuterCutOffClicked);
-
-	connect(morph_, &QSlider::valueChanged, this, &SlidersGroup::onMorphChanged);
-
-	connect(circleRadius_, &QSlider::valueChanged, this, &SlidersGroup::onRadiusChanged);
 }
 
 void SlidersGroup::onRadiusChanged(int value) {

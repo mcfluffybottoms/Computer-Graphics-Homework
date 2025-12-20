@@ -32,8 +32,8 @@ set(SRCS
     SliderGroup.cpp
     SliderGroup.h
     
-    Shaders/diffuse.fs
-    Shaders/diffuse.vs
+    Shaders/phonglight.fs
+    Shaders/phonglight.vs
     Textures/voronoi.png
 
     resources.qrc

@@ -5,13 +5,23 @@
 #include <qimage.h>
 #include <tinygltf/tiny_gltf.h>
 
-EntityModel::EntityModel(std::shared_ptr<QOpenGLShaderProgram> program)
-	: program_(program)
-{}
+EntityModel::EntityModel(std::shared_ptr<QOpenGLShaderProgram> program1, std::shared_ptr<QOpenGLShaderProgram> program2, std::shared_ptr<QOpenGLShaderProgram> program3, std::shared_ptr<QOpenGLShaderProgram> program4)
+	: m_geometry_program_(program1),
+	m_ao_program_(program2),
+	m_blur_program_(program3),
+	m_lighting_program_(program4)
+{
+	depthBuffer_ = std::make_unique<QOpenGLFramebufferObject>();
+	aoFBO_ = std::make_unique<QOpenGLFramebufferObject>();
+	aoBlurFBO_ = std::make_unique<QOpenGLFramebufferObject>();
+}
 
 EntityModel::~EntityModel()
 {
-	program_.reset();
+	m_geometry_program_.reset();
+	m_ao_program_.reset();
+	m_blur_program_.reset();
+	m_lighting_program_.reset();
 	if (importedModel)
 		delete importedModel;
 }
