@@ -21,8 +21,7 @@ struct SceneRenderer {
 
 	bool onResize(fgl::GLWidget * window);
 
-	bool setShaders();
-	void setUniformValues(const QMatrix4x4 & mvp,
+	void setUniformLightValues(const QMatrix4x4 & mvp,
 						  bool directional_,
 						  bool projection_);
 
@@ -34,8 +33,12 @@ struct SceneRenderer {
 private:
 	OpenGLContextPtr context_;
 
+	// light
 	void initLights();
-	void initUniformValues();
+	//DirectionalLight * dirLight;
+	//ProjectionLight * projLight;
+	GLboolean uniformDirectional_ = true;
+	GLboolean uniformProjection_ = true;
 
 	// render functions
 	bool geometryPass(const QMatrix4x4 & mvp);
@@ -44,10 +47,7 @@ private:
 	bool lightPass();
 
 	// shader setup
-	std::shared_ptr<QOpenGLShaderProgram> m_geometry_program_;
-	std::shared_ptr<QOpenGLShaderProgram> m_ao_program_;
-	std::shared_ptr<QOpenGLShaderProgram> m_blur_program_;
-	std::shared_ptr<QOpenGLShaderProgram> m_lighting_program_;
+	std::shared_ptr<ShaderManager> shaderManager;
 
 	// SSAO текстуры
     QOpenGLTexture* m_ssaoColorBuffer;
@@ -58,13 +58,6 @@ private:
 	std::unique_ptr<QOpenGLFramebufferObject> aoFBO_;
 	std::unique_ptr<QOpenGLFramebufferObject> aoBlurFBO_;
 
-	// light
-	DirectionalLight * dirLight;
-	ProjectionLight * projLight;
-	GLboolean uniformDirectional_ = true;
-	GLboolean uniformProjection_ = true;
-
 	// model
 	EntityModel * entityModel = nullptr;
-	GLint uniformViewPos_ = 1.0f;
 };

@@ -33,8 +33,6 @@ public:
 	QVector3D directionalLightPosition = QVector3D(0.5f, 0.5f, 0.5f);
 	QVector3D projectionLightPosition = QVector3D(0.5f, 0.5f, 0.5f);
 
-	QVector3D getVector(int vec_name);
-
 	QVector3D projectionLightDir = QVector3D(0.5f, 0.5f, 0.5f);
 
 	float projCutOff{20.f};
@@ -42,6 +40,8 @@ public:
 
 	bool hasDirectional = false;
 	bool hasProjection = false;
+
+	QVector3D getVector(int vec_name);
 
 signals:
 	void ambientChanged(int value);

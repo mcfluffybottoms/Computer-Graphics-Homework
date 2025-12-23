@@ -12,6 +12,9 @@ set(SRCS
     Vector3DInputWidget.cpp
     Vector3DInputWidget.h
 
+    ShaderManager.cpp
+    ShaderManager.h
+
     SceneRenderer.cpp
     SceneRenderer.h
 

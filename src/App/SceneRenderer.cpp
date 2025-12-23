@@ -23,64 +23,25 @@ SceneRenderer::~SceneRenderer()
 		delete entityModel;
 }
 
-bool SceneRenderer::setShaders()
-{
-	// geometry
-	m_geometry_program_ = std::make_shared<QOpenGLShaderProgram>();
-	m_geometry_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/phonglight.vs");
-	m_geometry_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment,
-											   ":/Shaders/phonglight.fs");
-	m_geometry_program_->link();
-	// ambient occlusion
-	m_ao_program_ = std::make_shared<QOpenGLShaderProgram>();
-	m_ao_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/phonglight.vs");
-	m_ao_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment,
-											   ":/Shaders/phonglight.fs");
-	m_ao_program_->link();
-	// blur
-	m_blur_program_ = std::make_shared<QOpenGLShaderProgram>();
-	m_blur_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/phonglight.vs");
-	m_blur_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment,
-											   ":/Shaders/phonglight.fs");
-	m_blur_program_->link();
-	// lighting
-	m_lighting_program_ = std::make_shared<QOpenGLShaderProgram>();
-	m_lighting_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Vertex, ":/Shaders/phonglight.vs");
-	m_lighting_program_->addCacheableShaderFromSourceFile(QOpenGLShader::Fragment,
-											   ":/Shaders/phonglight.fs");
-	m_lighting_program_->link();
-	return true;
-}
 
-void SceneRenderer::initUniformValues()
+void SceneRenderer::setUniformLightValues(const QMatrix4x4 & mvp,
+						  bool directional_,
+						  bool projection_)
 {
-	if (entityModel)
-	{
-		entityModel->mvpUniform_ = m_geometry_program_->uniformLocation("mvp");
-		entityModel->modelUniform_ = m_geometry_program_->uniformLocation("model");
-		entityModel->invertedTransposedMatrixUniform_ = m_geometry_program_->uniformLocation("itMatrix");
-	}
-	uniformViewPos_ = m_geometry_program_->uniformLocation("viewPos");
+	// if (entityModel)
+	// {
+	// 	entityModel->mvpUniform_ = m_geometry_program_->uniformLocation("mvp");
+	// 	entityModel->modelUniform_ = m_geometry_program_->uniformLocation("model");
+	// 	entityModel->invertedTransposedMatrixUniform_ = m_geometry_program_->uniformLocation("itMatrix");
+	// }
+	//uniformViewPos_ = m_geometry_program_->uniformLocation("viewPos");
 }
 
 void SceneRenderer::initLights()
 {
-	dirLight = new DirectionalLight(m_lighting_program_, 0);
-	projLight = new ProjectionLight(m_lighting_program_, 0);
+	//dirLight = new DirectionalLight(m_lighting_program_, 0);
+	//projLight = new ProjectionLight(m_lighting_program_, 0);
 }
-
-void SceneRenderer::setUniformValues(const QMatrix4x4 & mvp,
-									 bool directional_,
-									 bool projection_)
-{
-	if (entityModel)
-		program_->setUniformValue(entityModel->mvpUniform_, mvp);
-
-	program_->setUniformValue(uniformDirectional_, directional_);
-	program_->setUniformValue(uniformProjection_, projection_);
-	program_->setUniformValue(uniformViewPos_, camera->position());
-}
-
 
 bool SceneRenderer::onInit(fgl::GLWidget * window)
 {
@@ -88,13 +49,15 @@ bool SceneRenderer::onInit(fgl::GLWidget * window)
 		window->makeCurrent();
 	auto * f = context_ ? context_->functions() : nullptr;
 
-	setShaders();
-	entityModel = new EntityModel(program_);
+	shaderManager = std::make_shared<ShaderManager>();
+
+	entityModel = new EntityModel(shaderManager);
 	entityModel->setScale(QVector3D(0.1f, 0.1f, 0.1f));
 	entityModel->setPosition(QVector3D(0.0f, 0.0f, -1.0f));
 	entityModel->setRotation({180.0f, 180.0f, 0.0f});
 
-	initUniformValues();
+	shaderManager->initUniformValues();
+
 	initLights();
 
 	entityModel->setImportedModel(":/Models/sbob.glb");
@@ -111,12 +74,12 @@ bool SceneRenderer::onInit(fgl::GLWidget * window)
 }
 
 bool SceneRenderer::geometryPass(const QMatrix4x4 & mvp) {
-	m_geometry_program_->bind();
+	//m_geometry_program_->bind();
 	
-	context_->functions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	//context_->functions()->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
 	// set uniform values in shader
-	m_geometry_program_->setUniformValue(entityModel->mvpUniform_, mvp);
+	//m_geometry_program_->setUniformValue(entityModel->mvpUniform_, mvp);
 
 }
 
@@ -152,7 +115,7 @@ bool SceneRenderer::onRender(SlidersGroup * window, const QMatrix4x4 & mvp)
 
 	entityModel->render(mvp, context_);
 
-	program_->release();
+	//program_->release();
 	return true;
 }
 

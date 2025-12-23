@@ -5,23 +5,16 @@
 #include <qimage.h>
 #include <tinygltf/tiny_gltf.h>
 
-EntityModel::EntityModel(std::shared_ptr<QOpenGLShaderProgram> program1, std::shared_ptr<QOpenGLShaderProgram> program2, std::shared_ptr<QOpenGLShaderProgram> program3, std::shared_ptr<QOpenGLShaderProgram> program4)
-	: m_geometry_program_(program1),
-	m_ao_program_(program2),
-	m_blur_program_(program3),
-	m_lighting_program_(program4)
+EntityModel::EntityModel(std::shared_ptr<ShaderManager> program)
+	: shaderManager(program)
 {
-	depthBuffer_ = std::make_unique<QOpenGLFramebufferObject>();
-	aoFBO_ = std::make_unique<QOpenGLFramebufferObject>();
-	aoBlurFBO_ = std::make_unique<QOpenGLFramebufferObject>();
+	//depthBuffer_ = std::make_unique<QOpenGLFramebufferObject>();
+	//aoFBO_ = std::make_unique<QOpenGLFramebufferObject>();
+	//aoBlurFBO_ = std::make_unique<QOpenGLFramebufferObject>();
 }
 
 EntityModel::~EntityModel()
 {
-	m_geometry_program_.reset();
-	m_ao_program_.reset();
-	m_blur_program_.reset();
-	m_lighting_program_.reset();
 	if (importedModel)
 		delete importedModel;
 }
@@ -250,19 +243,7 @@ bool EntityModel::loadBuffers()
 		ibo_->allocate(mesh.indices.data(), static_cast<int>(mesh.indices.size() * sizeof(uint32_t)));
 
 		// Bind attributes
-		program_->bind();
-
-		program_->enableAttributeArray(0);
-		program_->setAttributeBuffer(0, GL_FLOAT, offsetof(Vertex, position), 3, sizeof(Vertex));
-
-		program_->enableAttributeArray(1);
-		program_->setAttributeBuffer(1, GL_FLOAT, offsetof(Vertex, normal), 3, sizeof(Vertex));
-
-		program_->enableAttributeArray(2);
-		program_->setAttributeBuffer(2, GL_FLOAT, offsetof(Vertex, texCoords), 2, sizeof(Vertex));
-
-		// Release all
-		program_->release();
+		shaderManager->bindGeometryAttributes();
 
 		//ibo_.release();
 		//vbo_.release();
@@ -280,13 +261,8 @@ bool EntityModel::render(const QMatrix4x4 & mvp, OpenGLContextPtr context)
 {
 	const auto & transform = getTransform();
 	const auto mvp_ = mvp * transform;
-
-	if (mvpUniform_ >= 0)
-		program_->setUniformValue(mvpUniform_, mvp_);
-	if (modelUniform_ >= 0)
-		program_->setUniformValue(modelUniform_, transform);
-	if (invertedTransposedMatrixUniform_ >= 0)
-		program_->setUniformValue(invertedTransposedMatrixUniform_, transform.inverted().transposed());
+	if (shaderManager)
+		shaderManager->setGeometryUniformValues(mvp_, transform);
 
 	for (size_t i = 0; i < importedModel->mesh.size(); ++i)
 	{
@@ -298,7 +274,7 @@ bool EntityModel::render(const QMatrix4x4 & mvp, OpenGLContextPtr context)
 			if (mesh.textureIndex >= 0 && mesh.textureIndex < static_cast<int>(importedModel->texture.size()))
 			{
 				importedModel->texture[mesh.textureIndex]->bind(0);
-				program_->setUniformValue("tex_2d", 0);
+				//program_->setUniformValue("tex_2d", 0);
 			}
 
 			context->functions()->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indices.size()), GL_UNSIGNED_INT, nullptr);
@@ -312,9 +288,4 @@ bool EntityModel::render(const QMatrix4x4 & mvp, OpenGLContextPtr context)
 		}
 	}
 	return true;
-}
-
-void EntityModel::setUniformValues(const QMatrix4x4 & mvp)
-{
-	program_->setUniformValue(mvpUniform_, mvp);
 }
