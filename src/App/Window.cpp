@@ -22,8 +22,8 @@
 
 void Window::changeCameraPerspective(float width, float height)
 {
-	const float aspect = float(height) / float(width);
-	const float fov = -1.0f;
+	const float aspect = float(width)/float(height) ;
+	const float fov = 60.0f;
 	const float nearPlane = 0.1f;
 	const float farPlane = 100.0f;
 	sceneRenderer->camera->setToPerspective(fov, aspect, nearPlane, farPlane);
@@ -75,7 +75,7 @@ Window::~Window()
 void Window::onInit()
 {
 	// Configure shaders
-	auto * f = QOpenGLContext::currentContext()->functions();
+	auto * f = QOpenGLContext::currentContext()->versionFunctions<QOpenGLFunctions_3_3_Core>();
 	if (f)
 	{
 		f->initializeOpenGLFunctions();
@@ -103,7 +103,7 @@ void Window::onRender()
 	// model_.translate(0, 0, -2);
 	const auto mvp = sceneRenderer->camera->getProjection() * sceneRenderer->camera->getView();
 
-	sceneRenderer->onRender(slidersGroup_, mvp);
+	sceneRenderer->onRender(size(), slidersGroup_, mvp);
 
 	++frameCount_;
 

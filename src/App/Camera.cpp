@@ -17,6 +17,11 @@ Camera::Camera()
 	updateCameraVectors();
 }
 
+float Camera::FOV() const
+{
+	return fov_;
+}
+
 void Camera::setToPerspective(float fov, float aspect, float nearPlane, float farPlane)
 {
 	projection_.setToIdentity();

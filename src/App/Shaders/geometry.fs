@@ -1,17 +1,5 @@
 #version 330 core
-
-layout (location = 0) out vec4 gPosition;
-layout (location = 1) out vec3 gNormal;
-layout (location = 2) out vec4 gAlbedoSpec;
-
-out vec3 fragPos;
-out vec3 fragNormal;
-out vec2 fragTexCoord;
-
-out vec4 posOut;
-
+out vec4 out_col;
 void main() {
-    gPosition = FragPos;
-    gNormal = normalize(Normal);
-    gAlbedoSpec.rgb = vec3(0.95);
+    out_col = vec4(1.0,0.0,0.0,1.0);
 }

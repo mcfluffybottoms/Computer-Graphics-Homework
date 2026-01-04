@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/">
-        <file>Models/sbob.glb</file>
+        <file>Models/lois.glb</file>
     </qresource>
     <qresource prefix="/">
         <file>Textures/voronoi.png</file>
@@ -8,5 +8,11 @@
     <qresource prefix="/">
         <file>Shaders/phonglight.fs</file>
         <file>Shaders/phonglight.vs</file>
+        <file>Shaders/ao.fs</file>
+        <file>Shaders/ao.vs</file>
+        <file>Shaders/blur.fs</file>
+        <file>Shaders/blur.vs</file>
+        <file>Shaders/geometry.fs</file>
+        <file>Shaders/geometry.vs</file>
     </qresource>
 </RCC>

@@ -19,7 +19,8 @@ struct EntityModel : public Entity {
 	bool setImportedModel(const QString & source);
 	Model * getImportedModel();
 
-	bool render(const QMatrix4x4 & mvp, OpenGLContextPtr context_);
+	bool renderMesh(OpenGLContextPtr context_);
+	bool render(std::shared_ptr<QOpenGLShaderProgram> program_, OpenGLContextPtr context_);
 
 	~EntityModel();
 

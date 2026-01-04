@@ -7,11 +7,7 @@
 
 EntityModel::EntityModel(std::shared_ptr<ShaderManager> program)
 	: shaderManager(program)
-{
-	//depthBuffer_ = std::make_unique<QOpenGLFramebufferObject>();
-	//aoFBO_ = std::make_unique<QOpenGLFramebufferObject>();
-	//aoBlurFBO_ = std::make_unique<QOpenGLFramebufferObject>();
-}
+{}
 
 EntityModel::~EntityModel()
 {
@@ -257,13 +253,23 @@ bool EntityModel::loadBuffers()
 	return true;
 }
 
-bool EntityModel::render(const QMatrix4x4 & mvp, OpenGLContextPtr context)
+bool EntityModel::renderMesh(OpenGLContextPtr context)
 {
-	const auto & transform = getTransform();
-	const auto mvp_ = mvp * transform;
-	if (shaderManager)
-		shaderManager->setGeometryUniformValues(mvp_, transform);
+	for (size_t i = 0; i < importedModel->mesh.size(); ++i)
+	{
+		const auto & mesh = importedModel->mesh[i];
+		if (i < vaos_.size() && vaos_[i])
+		{
+			vaos_[i]->bind();
+			context->functions()->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indices.size()), GL_UNSIGNED_INT, nullptr);
+			vaos_[i]->release();
+		}
+	}
+	return true;
+}
 
+bool EntityModel::render(std::shared_ptr<QOpenGLShaderProgram> program_, OpenGLContextPtr context)
+{
 	for (size_t i = 0; i < importedModel->mesh.size(); ++i)
 	{
 		const auto & mesh = importedModel->mesh[i];
@@ -274,7 +280,7 @@ bool EntityModel::render(const QMatrix4x4 & mvp, OpenGLContextPtr context)
 			if (mesh.textureIndex >= 0 && mesh.textureIndex < static_cast<int>(importedModel->texture.size()))
 			{
 				importedModel->texture[mesh.textureIndex]->bind(0);
-				//program_->setUniformValue("tex_2d", 0);
+				program_->setUniformValue("tex_2d", 0);
 			}
 
 			context->functions()->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indices.size()), GL_UNSIGNED_INT, nullptr);

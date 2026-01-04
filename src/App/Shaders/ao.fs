@@ -1,84 +1,62 @@
-#version 330 core
+#version 330
 
-uniform sampler2D tex_2d;
+in vec2 TexCoord;
+in vec2 ViewRay;
+in vec4 pos;
 
-struct DirectionalLight {
-    vec3 lightColor;  
-    vec3 lightPos;
-    float ambient;
-    float diffuse;
-    float specular;
-};
+out vec4 FragColor;
 
-struct ProjectionLight {
-    vec3 lightColor;  
-    vec3 lightPos;
-    vec3 lightDir;
-    float ambient;
-    float diffuse;
-    float specular;
-    float cutOff;
-    float outerCutOff;
-};
+uniform sampler2D gDepthMap;
+uniform float gSampleRad = 0.5f;
 
-uniform vec3 viewPos;
-uniform bool hasDirectional;  
-uniform bool hasProjection; 
+uniform mat4 gProj;
+const int MAX_KERNEL_SIZE = 64;
+uniform vec3 gKernel[MAX_KERNEL_SIZE];
 
-uniform DirectionalLight dirLight[1];
-uniform ProjectionLight projLight[1];
+float zNear = 0.1; 
+float zFar  = 100.0; 
 
-in vec3 fragPos;
-in vec3 fragNormal;
-in vec2 fragTexCoord;
+float LinearizeDepth(float depth) {
+    // преобразуем обратно в NDC
+    float z = depth * 2.0 - 1.0; 
+    return (2.0 * zNear * zFar) / (zFar + zNear - z * (zFar - zNear));
+}
 
-out vec4 out_col;
+float CalcViewZ(vec2 Coords) {
+    float Depth = texture(gDepthMap, Coords).x;
+    float ViewZ = gProj[3][2] / (2 * Depth -1 - gProj[2][2]);
+    return ViewZ;
+}
 
 void main() {
-    vec3 texColor = texture(tex_2d, fragTexCoord).rgb;
-    vec3 baseColor = texColor.rgb;
-    vec3 norm = normalize(fragNormal);
-    vec3 viewDir = normalize(viewPos - fragPos);
+    float ViewZ = CalcViewZ(TexCoord);
 
-    vec3 result = vec3(0.0);
+    float ViewX = ViewRay.x * ViewZ;
+    float ViewY = ViewRay.y * ViewZ;
 
-    if (hasDirectional) {
-        vec3 lightDirection = normalize(-dirLight[0].lightPos);
+    vec3 Pos = vec3(ViewX, ViewY, ViewZ);
 
-        vec3 ambientRes = dirLight[0].ambient * dirLight[0].lightColor;
+    float AO = 0.0;
 
-        float diff = max(dot(norm, lightDirection), 0.0);
-        vec3 diffuseRes = dirLight[0].diffuse * diff * dirLight[0].lightColor;
+    for (int i = 0 ; i < MAX_KERNEL_SIZE ; i++) {
+        vec3 samplePos = Pos + gKernel[i];
+        vec4 offset = vec4(samplePos, 1.0);
+        offset = gProj * offset;
+        offset.xy /= offset.w;
+        offset.xy = offset.xy * 0.5 + vec2(0.5);
 
-        vec3 reflectDir = reflect(-lightDirection, norm);
-        float specAngle = max(dot(viewDir, reflectDir), 0.0);
-        float specPower = pow(specAngle, 64.0);
-        vec3 specularRes = dirLight[0].specular * specPower * dirLight[0].lightColor;
+        float sampleDepth = CalcViewZ(offset.xy);
 
-        result += (ambientRes + diffuseRes + specularRes) * baseColor;
-    }
-
-    if (hasProjection) {
-        vec3 lightDirection = normalize(projLight[0].lightPos - fragPos);
-        float theta = dot(lightDirection, normalize(-projLight[0].lightDir));
-        float epsilon = projLight[0].cutOff - projLight[0].outerCutOff;
-        float intensity = clamp((theta - projLight[0].outerCutOff) / epsilon, 0.0, 1.0);
-
-        if (theta > projLight[0].outerCutOff) {
-            vec3 ambientRes = projLight[0].ambient * projLight[0].lightColor;
-            float diff = max(dot(norm, lightDirection), 0.0);
-            vec3 diffuseRes = projLight[0].diffuse * diff * projLight[0].lightColor;
-
-            vec3 halfwayDir = normalize(lightDirection + viewDir);
-            float spec = pow(max(dot(norm, halfwayDir), 0.0), 32.0);
-            vec3 specularRes = projLight[0].specular * spec * projLight[0].lightColor;
-
-            result += (ambientRes + (diffuseRes + specularRes) * intensity) * baseColor;
+        if (abs(Pos.z - sampleDepth) < gSampleRad) {
+            AO += step(sampleDepth,samplePos.z);
         }
     }
 
-    if (!hasDirectional && !hasProjection) {
-        result = baseColor;
-    }
-    out_col = vec4(result, 1.0);
-}
+    AO = 1.0 - AO/64.0;
+
+    FragColor = vec4(pow(AO, 2.0));
+
+    //FragColor = vec4(vec3(ViewZ * 100), 1.0);
+    //float depth = LinearizeDepth(texture(gDepthMap, TexCoord).x);
+    //FragColor = vec4(vec3(depth), 1.0);
+} 

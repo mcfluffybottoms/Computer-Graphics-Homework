@@ -29,6 +29,7 @@ struct Camera {
 	//yaw and pitch
 	float & yaw();
 	float & pitch();
+	float FOV() const;
 
 	// camera movement
 	void zoom(const QVector3D & mouseData, float width, float height, float dpr);

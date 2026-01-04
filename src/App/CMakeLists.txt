@@ -9,6 +9,9 @@ set(SRCS
     OpenGLContext.cpp
     OpenGLContext.h
 
+    IOBuffer.cpp
+    IOBuffer.h
+
     Vector3DInputWidget.cpp
     Vector3DInputWidget.h
 

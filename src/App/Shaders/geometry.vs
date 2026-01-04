@@ -8,18 +8,6 @@ uniform mat4 mvp;
 uniform mat4 model;
 uniform mat4 itMatrix;
 
-out vec3 fragPos;
-out vec3 fragNormal;
-out vec2 fragTexCoord;
-
 void main() {
-    vec3 center = vec3(0, 0, 0);
-
-    vec3 posNormal = normalize(normal);
-
-    fragPos = vec3(model * vec4(position, 1.0));
-    fragNormal = mat3(itMatrix) * posNormal;
-    fragTexCoord = texCoords;
-
     gl_Position = mvp * vec4(position, 1.0);
 }
