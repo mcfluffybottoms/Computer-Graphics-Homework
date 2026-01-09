@@ -2,7 +2,7 @@
 
 #include "App/IOBuffer.h"
 #include "App/Light.h"
-#include "App/Resources.h"
+#include "App/Skybox.h"
 #include "App/SliderGroup.h"
 #include "EntityModel.h"
 #include <Base/GLWidget.hpp>
@@ -12,71 +12,79 @@
 #include <QOpenGLVertexArrayObject>
 #include <memory>
 
-#define KERNEL_SIZE 64
+#include "App/SsaoGeometryPass.h"
+#include "App/SsaoAmbientOcclusion.h"
+#include "App/SsaoBlur.h"
 
 struct SceneRenderer {
-	SceneRenderer(OpenGLContextPtr context = nullptr);
+	SceneRenderer(std::shared_ptr<SharedData> data, OpenGLContextPtr context = nullptr);
 
 	~SceneRenderer();
 
 	bool onInit(fgl::GLWidget * window);
 
-	bool onRender(const QSize& size, SlidersGroup * window, const QMatrix4x4 & mvp);
+	bool onRender(GLint default_framebuffer);
 
 	bool onResize(fgl::GLWidget * window);
-
-	void setUniformLightValues(const QMatrix4x4 & mvp,
-							   bool directional_,
-							   bool projection_);
 
 	void rotateObj(const QVector2D & rotation);
 
 
-	Camera * camera = nullptr;
+	Camera * camera_ = nullptr;
 
 private:
 	OpenGLContextPtr context_;
 
+	std::unique_ptr<GeometryPass> geometryPassC;
+	std::unique_ptr<AmbientOcclusion> ambientOcclusionC;
+	std::unique_ptr<Blur> blurC;
+
 	// Render Quad
 	struct Quad {
 		Quad();
-		void loadBuffers(std::shared_ptr<QOpenGLShaderProgram> program_);
+		void loadBuffers(OpenGLContextPtr context);
 		void render(OpenGLContextPtr context);
 	  private:
-		ModelMesh mesh;
-		std::unique_ptr<QOpenGLBuffer> vbo_;
-		std::unique_ptr<QOpenGLBuffer> ibo_;
-		std::unique_ptr<QOpenGLVertexArrayObject> vao_;
+		float vertices[20] = {
+            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+             1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+             1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+        };
+		unsigned int quadVAO = 0;
+		unsigned int quadVBO;
 	};
 	Quad quad;
-	std::array<QVector3D, KERNEL_SIZE> SSAOKernel;
 
-	// light
-	void initLights();
-	DirectionalLight* dirLight;
-	ProjectionLight* projLight;
-	GLboolean uniformDirectional_ = true;
-	GLboolean uniformProjection_ = true;
-	void setLightUniforms(SlidersGroup * window);
+	// Light data for scene
+	struct LightBlock {
+		LightBlock();
+		~LightBlock();
+		void setUniforms(std::shared_ptr<SharedData> data);
+		void enable();
+		void disable();
+		std::shared_ptr<QOpenGLShaderProgram> getShader();
+	  private:
+		DirectionalLight* dirLight;
+		ProjectionLight* projLight;
+		GLboolean hasDirectionalUniform_ = -1;
+		GLboolean hasProjectionUniform_ = -1;
+		GLint debugAOUniform_ = -1;
+		GLint screenSizeUniform_ = -1;
+		std::shared_ptr<QOpenGLShaderProgram> program_;
+	};
+	std::unique_ptr<LightBlock> lightBlock;
 
 	// render functions
-	bool geometryPass(const QMatrix4x4 & mvp);
-	bool SSAOPass(const QSize& size, const QMatrix4x4 & projMatrix);
-	bool blurPass(const QMatrix4x4 & mvp);
-	bool lightPass(const QSize& size, SlidersGroup* window, const QMatrix4x4 & mvp);
-
-	// shader setup
-	std::shared_ptr<ShaderManager> shaderManager;
-
-	// SSAO текстуры
-	QOpenGLTexture * m_ssaoColorBuffer;
-	QOpenGLTexture * m_ssaoBlurBuffer;
-
-	// new buffers
-	std::unique_ptr<IOBuffer> depthBuffer_;
-	std::unique_ptr<IOBuffer> aoBuffer_;
-	std::unique_ptr<IOBuffer> aoBlurBuffer_;
+	bool geometryPass();
+	bool SSAOPass();
+	bool blurPass();
+	bool lightPass(GLint default_framebuffer);
 
 	// model
 	EntityModel * entityModel = nullptr;
+	std::unique_ptr<Skybox> box;
+
+	// shared data
+	std::shared_ptr<SharedData> data_;
 };

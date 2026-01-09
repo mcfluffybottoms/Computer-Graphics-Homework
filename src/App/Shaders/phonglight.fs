@@ -1,7 +1,13 @@
 #version 330 core
 
-uniform sampler2D tex_2d;
-uniform sampler2D ao_map;
+uniform sampler2D positionMap;
+uniform sampler2D normalMap;
+uniform sampler2D albedoMap;
+
+uniform sampler2D colorMap;
+uniform sampler2D aoMap;
+
+in vec2 fragTexCoord;
 
 struct DirectionalLight {
     vec3 lightColor;  
@@ -30,22 +36,27 @@ uniform vec2 screenSize;
 uniform DirectionalLight dirLight[1];
 uniform ProjectionLight projLight[1];
 
-in vec3 fragPos;
-in vec3 fragNormal;
-in vec2 fragTexCoord;
+uniform bool debugAO = false;
 
 out vec4 out_col;
 
-vec2 CalcScreenTexCoord() {
-    return gl_FragCoord.xy / screenSize;
-}
-
 void main() {
-    vec4 texColor = texture(tex_2d, fragTexCoord);
-    vec4 baseColor = vec4(1.0,1.0,1.0,1.0); 
+    if(debugAO) {
+        float aoFactor = texture(aoMap, fragTexCoord).r;
+        vec4 ao = vec4(vec3(aoFactor), 1.0);
+        out_col = ao;
+        return;
+    }
+
+    vec3 fragPos = texture(positionMap, fragTexCoord).rgb;
+    vec3 fragNormal = texture(normalMap, fragTexCoord).rgb;
+    vec4 texColor = texture(albedoMap, fragTexCoord);
+
+    vec4 baseColor = texColor; 
+
     vec3 norm = normalize(fragNormal);
     vec3 viewDir = normalize(viewPos - fragPos);
-    float aoFactor = texture(ao_map, CalcScreenTexCoord()).r;
+    float aoFactor = texture(aoMap, fragTexCoord).r;
     vec4 result = vec4(0.0);
 
     if (hasDirectional) {
@@ -64,29 +75,28 @@ void main() {
         result += (ambientRes + diffuseRes + specularRes) * baseColor;
     }
 
-    // if (hasProjection) {
-    //     vec3 lightDirection = normalize(projLight[0].lightPos - fragPos);
-    //     float theta = dot(lightDirection, normalize(-projLight[0].lightDir));
-    //     float epsilon = projLight[0].cutOff - projLight[0].outerCutOff;
-    //     float intensity = clamp((theta - projLight[0].outerCutOff) / epsilon, 0.0, 1.0);
+    if (hasProjection) {
+        vec3 lightDirection = normalize(projLight[0].lightPos - fragPos);
+        float theta = dot(lightDirection, normalize(-projLight[0].lightDir));
+        float epsilon = projLight[0].cutOff - projLight[0].outerCutOff;
+        float intensity = clamp((theta - projLight[0].outerCutOff) / epsilon, 0.0, 1.0);
 
-    //     if (theta > projLight[0].outerCutOff) {
-    //         vec3 ambientRes = projLight[0].ambient * projLight[0].lightColor;
-    //         float diff = max(dot(norm, lightDirection), 0.0);
-    //         vec3 diffuseRes = projLight[0].diffuse * diff * projLight[0].lightColor;
+        if (theta > projLight[0].outerCutOff) {
+            vec3 ambientRes = projLight[0].ambient * projLight[0].lightColor * aoFactor;
+            float diff = max(dot(norm, lightDirection), 0.0);
+            vec3 diffuseRes = projLight[0].diffuse * diff * projLight[0].lightColor;
 
-    //         vec3 halfwayDir = normalize(lightDirection + viewDir);
-    //         float spec = pow(max(dot(norm, halfwayDir), 0.0), 32.0);
-    //         vec3 specularRes = projLight[0].specular * spec * projLight[0].lightColor;
+            vec3 halfwayDir = normalize(lightDirection + viewDir);
+            float spec = pow(max(dot(norm, halfwayDir), 0.0), 32.0);
+            vec3 specularRes = projLight[0].specular * spec * projLight[0].lightColor;
 
-    //         result += (ambientRes + (diffuseRes + specularRes) * intensity) * baseColor;
-    //     }
-    // }
+            result += vec4((ambientRes + (diffuseRes + specularRes) * intensity), 1.0) * baseColor;
+        }
+    }
 
     if (!hasDirectional && !hasProjection) {
         result = baseColor * aoFactor;
     }
 
-    //vec4 ao = vec4(vec3(aoFactor), 1.0);
     out_col = result;
 }

@@ -1,5 +1,17 @@
 #version 330 core
-out vec4 out_col;
+
+uniform sampler2D colorMap;
+
+layout(location=0) out vec3 position; // add
+layout(location=1) out vec3 normal;
+layout(location=2) out vec4 albedo;
+
+in vec3 fragPos;
+in vec3 fragNormal;
+in vec2 fragTexCoord;
+
 void main() {
-    out_col = vec4(1.0,0.0,0.0,1.0);
+    position = fragPos;
+    normal = fragNormal;
+    albedo = texture(colorMap, fragTexCoord);
 }

@@ -1,62 +1,73 @@
 #version 330
 
-in vec2 TexCoord;
-in vec2 ViewRay;
-in vec4 pos;
+in vec2 fragTexCoord;
+in vec2 viewRay;
 
 out vec4 FragColor;
 
-uniform sampler2D gDepthMap;
-uniform float gSampleRad = 0.5f;
+uniform bool hasAO = true;
 
-uniform mat4 gProj;
-const int MAX_KERNEL_SIZE = 64;
-uniform vec3 gKernel[MAX_KERNEL_SIZE];
+uniform sampler2D normalMap;
+uniform sampler2D depthMap;
+uniform sampler2D positionMap;
+uniform sampler2D noiseMap;
 
-float zNear = 0.1; 
-float zFar  = 100.0; 
+uniform float sampleRadius = 0.5;
+uniform float bias = 0.025;
+uniform mat4 projection;
 
-float LinearizeDepth(float depth) {
-    // преобразуем обратно в NDC
-    float z = depth * 2.0 - 1.0; 
-    return (2.0 * zNear * zFar) / (zFar + zNear - z * (zFar - zNear));
-}
+uniform int KERNEL_SIZE = 64;
+const int MAX_KERNEL_SIZE = 256;
+uniform vec3 kernel[MAX_KERNEL_SIZE];
 
-float CalcViewZ(vec2 Coords) {
-    float Depth = texture(gDepthMap, Coords).x;
-    float ViewZ = gProj[3][2] / (2 * Depth -1 - gProj[2][2]);
-    return ViewZ;
-}
+uniform float zNear = 0.1; 
+uniform float zFar  = 100.0; 
+uniform vec2 screenSize;
 
 void main() {
-    float ViewZ = CalcViewZ(TexCoord);
+    if(!hasAO) {
+        FragColor = vec4(1.0);
+        return;
+    }
 
-    float ViewX = ViewRay.x * ViewZ;
-    float ViewY = ViewRay.y * ViewZ;
+    float depth = texture(depthMap, fragTexCoord).x;
+    vec3 normal = texture(normalMap, fragTexCoord).xyz;
+    vec3 fragPos = texture(positionMap, fragTexCoord).xyz;
 
-    vec3 Pos = vec3(ViewX, ViewY, ViewZ);
+    float viewZ = projection[3][2] / (2 * depth -1 - projection[2][2]);
+    float viewX = viewRay.x * viewZ;
+    float viewY = viewRay.y * viewZ;
+    vec3 pos = vec3(viewX, viewY, viewZ);
 
-    float AO = 0.0;
+    vec2 noiseScale = vec2(screenSize.x/4.0, screenSize.y/4.0); 
+    vec3 randomVec = normalize(texture(noiseMap, fragTexCoord * noiseScale).xyz);
 
-    for (int i = 0 ; i < MAX_KERNEL_SIZE ; i++) {
-        vec3 samplePos = Pos + gKernel[i];
+    // from tangent-space to view-space
+    vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
+    vec3 bitangent = cross(normal, tangent);
+    mat3 tbn = mat3(tangent, bitangent, normal);
+
+    float occlusion  = 0.0;
+    for (int i = 0 ; i < KERNEL_SIZE ; i++) {
+        // get sample position
+        vec3 samplePos = pos + tbn * kernel[i] * sampleRadius;
+
+        // project sample position to texture
         vec4 offset = vec4(samplePos, 1.0);
-        offset = gProj * offset;
+        offset = projection * offset;
         offset.xy /= offset.w;
         offset.xy = offset.xy * 0.5 + vec2(0.5);
 
-        float sampleDepth = CalcViewZ(offset.xy);
+        float depth = texture(depthMap, offset.xy).x;
+        float sampleDepth = projection[3][2] / (2 * depth -1 - projection[2][2]);
 
-        if (abs(Pos.z - sampleDepth) < gSampleRad) {
-            AO += step(sampleDepth,samplePos.z);
+        // range check
+        float rangeCheck = smoothstep(0.0, 1.0, sampleRadius / abs(fragPos.z - sampleDepth));
+        if(sampleDepth >= samplePos.z + bias) {
+            occlusion += rangeCheck;
         }
     }
 
-    AO = 1.0 - AO/64.0;
-
-    FragColor = vec4(pow(AO, 2.0));
-
-    //FragColor = vec4(vec3(ViewZ * 100), 1.0);
-    //float depth = LinearizeDepth(texture(gDepthMap, TexCoord).x);
-    //FragColor = vec4(vec3(depth), 1.0);
+    occlusion  = 1.0 - occlusion  / KERNEL_SIZE;
+    FragColor = vec4(pow(occlusion , 2.0));
 } 

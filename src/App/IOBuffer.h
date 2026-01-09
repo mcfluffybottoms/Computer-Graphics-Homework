@@ -1,22 +1,24 @@
+#pragma once
+
 #include "App/Entity.h"
 #include "App/OpenGLContext.h"
-#include <GL/gl.h>
-#include <iostream>
+#include <vector>
 
 struct IOBuffer {
-    IOBuffer(OpenGLContextPtr context, uint width, uint height, GLenum internalType);
+    IOBuffer(OpenGLContextPtr context, uint width, uint height, bool hasDepthBuffer);
+
+    void bindNewColorTexture(uint width, uint height, GLenum internalType);
 
     ~IOBuffer();
 
     void write();
 
-    void read(GLenum TextureUnit);
+    void read(uint bufferNum, GLenum TextureUnit);
 
 private:
     OpenGLContextPtr context_;
-    GLenum textureType_;
 	GLuint buffer_;
-	GLuint texture_ = 0;
 
-    GLuint debug_ = 0;
+    std::vector<GLuint> textures_;
+    GLuint depthTexture_;
 };

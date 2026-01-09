@@ -5,8 +5,7 @@
 #include <qimage.h>
 #include <tinygltf/tiny_gltf.h>
 
-EntityModel::EntityModel(std::shared_ptr<ShaderManager> program)
-	: shaderManager(program)
+EntityModel::EntityModel()
 {}
 
 EntityModel::~EntityModel()
@@ -24,7 +23,7 @@ bool EntityModel::setImportedModel(const QString & source)
 		return false;
 	}
 	importedModel = model;
-	loadBuffers();
+	//loadBuffers();
 	return true;
 }
 
@@ -211,7 +210,7 @@ std::vector<ModelMesh> EntityModel::loadMeshes(const tinygltf::Model & model)
 	return meshes_;
 }
 
-bool EntityModel::loadBuffers()
+bool EntityModel::loadBuffers(std::shared_ptr<QOpenGLShaderProgram> program_)
 {
 	if (!importedModel)
 		return false;
@@ -239,11 +238,19 @@ bool EntityModel::loadBuffers()
 		ibo_->allocate(mesh.indices.data(), static_cast<int>(mesh.indices.size() * sizeof(uint32_t)));
 
 		// Bind attributes
-		shaderManager->bindGeometryAttributes();
+		program_->bind();
 
-		//ibo_.release();
-		//vbo_.release();
-		//vao_.release();
+		program_->enableAttributeArray(0);
+		program_->setAttributeBuffer(0, GL_FLOAT, offsetof(Vertex, position), 3, sizeof(Vertex));
+
+		program_->enableAttributeArray(1);
+		program_->setAttributeBuffer(1, GL_FLOAT, offsetof(Vertex, normal), 3, sizeof(Vertex));
+
+		program_->enableAttributeArray(2);
+		program_->setAttributeBuffer(2, GL_FLOAT, offsetof(Vertex, texCoords), 2, sizeof(Vertex));
+
+		// Release all
+		program_->release();
 
 		vaos_.push_back(std::move(vao_));
 		vbos_.push_back(std::move(vbo_));
@@ -268,7 +275,7 @@ bool EntityModel::renderMesh(OpenGLContextPtr context)
 	return true;
 }
 
-bool EntityModel::render(std::shared_ptr<QOpenGLShaderProgram> program_, OpenGLContextPtr context)
+bool EntityModel::render(OpenGLContextPtr context, GLint texIndex)
 {
 	for (size_t i = 0; i < importedModel->mesh.size(); ++i)
 	{
@@ -279,8 +286,7 @@ bool EntityModel::render(std::shared_ptr<QOpenGLShaderProgram> program_, OpenGLC
 
 			if (mesh.textureIndex >= 0 && mesh.textureIndex < static_cast<int>(importedModel->texture.size()))
 			{
-				importedModel->texture[mesh.textureIndex]->bind(0);
-				program_->setUniformValue("tex_2d", 0);
+				importedModel->texture[mesh.textureIndex]->bind(texIndex);
 			}
 
 			context->functions()->glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(mesh.indices.size()), GL_UNSIGNED_INT, nullptr);

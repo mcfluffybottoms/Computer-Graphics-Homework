@@ -6,20 +6,28 @@ set(SRCS
     Camera.cpp
     Camera.h
 
+    SharedData.h
+
     OpenGLContext.cpp
     OpenGLContext.h
 
     IOBuffer.cpp
     IOBuffer.h
 
-    Vector3DInputWidget.cpp
-    Vector3DInputWidget.h
+    SsaoGeometryPass.cpp
+    SsaoGeometryPass.h
 
-    ShaderManager.cpp
-    ShaderManager.h
+    SsaoAmbientOcclusion.cpp
+    SsaoAmbientOcclusion.h
 
+    SsaoBlur.cpp
+    SsaoBlur.h
+    
     SceneRenderer.cpp
     SceneRenderer.h
+
+    Skybox.cpp
+    Skybox.h
 
     Light.cpp
     Light.h
@@ -37,10 +45,6 @@ set(SRCS
 
     SliderGroup.cpp
     SliderGroup.h
-    
-    Shaders/phonglight.fs
-    Shaders/phonglight.vs
-    Textures/voronoi.png
 
     resources.qrc
 )

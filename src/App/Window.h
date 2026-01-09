@@ -56,6 +56,9 @@ signals:
 	void updateUI();
 
 private:
+	// shared data
+	std::shared_ptr<SharedData> data;
+
 	// boxes
 	void setupSliders(QVBoxLayout * layout);
 	SlidersGroup * slidersGroup_ = nullptr;
@@ -71,7 +74,6 @@ private:
 	QVector2D lastMousePos_;
 
 	InputManager * inputManager = nullptr;
-	//ResourceManager* resourceManager = nullptr;
 
 	// count fps
 	QElapsedTimer timer_;

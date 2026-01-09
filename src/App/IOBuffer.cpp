@@ -1,12 +1,49 @@
 #include "IOBuffer.h"
+#include <GL/gl.h>
+#include <iostream>
 
-IOBuffer::IOBuffer(OpenGLContextPtr context, uint width, uint height, GLenum internalType)
+IOBuffer::IOBuffer(OpenGLContextPtr context, uint width, uint height, bool hasDepthBuffer)
 	: context_(context)
-	, textureType_(internalType == GL_NONE ? GL_DEPTH_COMPONENT32F : internalType)
 {
-	auto * f = context_ ? context_->functions() : nullptr;
+	auto * f = context_->functions();
 	buffer_ = 0;
-	texture_ = 0;
+	depthTexture_ = 0;
+
+	f->glGenFramebuffers(1, &buffer_);
+	f->glBindFramebuffer(GL_FRAMEBUFFER, buffer_);
+
+	if(hasDepthBuffer) {
+		f->glGenTextures(1, &depthTexture_);
+		f->glBindTexture(GL_TEXTURE_2D, depthTexture_);
+
+		f->glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);//
+		f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);//
+		f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		f->glFramebufferTexture2D(
+			GL_FRAMEBUFFER,
+			GL_DEPTH_ATTACHMENT,
+			GL_TEXTURE_2D,
+			depthTexture_,
+		0);
+
+		GLenum status = f->glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+		if (status != GL_FRAMEBUFFER_COMPLETE) {
+			std::cerr << "FB error, status: " << status << "\n";
+			return;
+		}
+	}
+
+	f->glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void IOBuffer::bindNewColorTexture(uint width, uint height, GLenum internalType) {
+	auto * f = context_->functions();
+
+	f->glBindFramebuffer(GL_FRAMEBUFFER, buffer_);
 
 	GLenum format, type;
 	switch (internalType)
@@ -15,73 +52,52 @@ IOBuffer::IOBuffer(OpenGLContextPtr context, uint width, uint height, GLenum int
 			format = GL_RGB;
 			type = GL_FLOAT;
 			break;
+		case GL_RGBA16F:
+			format = GL_RGBA;
+			type = GL_FLOAT;
+			break;
 		case GL_R32F:
 			format = GL_RED;
 			type = GL_FLOAT;
 			break;
-		case GL_NONE:
-			format = GL_DEPTH_COMPONENT;
-			type = GL_FLOAT;
-			break;
 		default:
-			std::cerr << "Invalid internal type. Setting to GL_NONE.\n";
-			format = GL_DEPTH_COMPONENT;
+			std::cerr << "Invalid internal type. Setting to GL_RGBA16F.\n";
+			format = GL_RGBA;
 			type = GL_FLOAT;
 			break;
 	}
 
-	f->glGenFramebuffers(1, &buffer_);
-	f->glBindFramebuffer(GL_FRAMEBUFFER, buffer_);
+	textures_.push_back(0);
 
-	f->glGenTextures(1, &texture_);
-	f->glBindTexture(GL_TEXTURE_2D, texture_);
+	f->glGenTextures(1, &textures_.back());
+	f->glBindTexture(GL_TEXTURE_2D, textures_.back());
 
-
-	f->glTexImage2D(GL_TEXTURE_2D, 0, textureType_, width, height, 0, format, type, NULL);
+	f->glTexImage2D(GL_TEXTURE_2D, 0, internalType, width, height, 0, format, type, NULL);
 	f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);//
 	f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);//
 	f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	f->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+	f->glFramebufferTexture2D(
+		GL_FRAMEBUFFER,
+		GL_COLOR_ATTACHMENT0 + textures_.size() - 1,
+		GL_TEXTURE_2D,
+		textures_.back(),
+	0);
 
-	if (internalType == GL_NONE)
-	{
-		// DEBUG
-		f->glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-		f->glTexParameteri( GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_LUMINANCE);
-		//DEBUG
-		f->glFramebufferTexture2D(
-			GL_FRAMEBUFFER,
-			GL_DEPTH_ATTACHMENT,
-			GL_TEXTURE_2D,
-			texture_,
-			0);
+	std::vector<GLenum> drawBuffers;
+	for (size_t i = 0; i < textures_.size(); ++i)
+		drawBuffers.push_back(GL_COLOR_ATTACHMENT0 + i);
 
+	f->glDrawBuffers(drawBuffers.size(), drawBuffers.data());
 
-    	f->glDrawBuffer(GL_NONE);
-    	f->glReadBuffer(GL_NONE);
-	}
-	else
-	{
-		f->glFramebufferTexture2D(
-			GL_FRAMEBUFFER,
-			GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D,
-			texture_,
-			0);
-
-		GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0};
-		f->glDrawBuffers(1, drawBuffers);
-	}
-
-    GLenum status = f->glCheckFramebufferStatus(GL_FRAMEBUFFER);
+		GLenum status = f->glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
     if (status != GL_FRAMEBUFFER_COMPLETE) {
-        std::cerr << "FB error, status: " << status << "\n";
+        std::cerr << "FB error while bindNewColorTexture, status: " << status << "\n";
         return;
     }
 
-	f->glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
 IOBuffer::~IOBuffer()
@@ -91,26 +107,30 @@ IOBuffer::~IOBuffer()
 	{
 		return;
 	}
-	if (buffer_ != 0)
-	{
+	if (buffer_ != 0) {
 		f->glDeleteFramebuffers(1, &buffer_);
 	}
-
-	if (texture_ != 0)
-	{
-		f->glDeleteTextures(1, &texture_);
+	if (depthTexture_ != 0) {
+		f->glDeleteTextures(1, &depthTexture_);
 	}
+	if (!textures_.empty()) {
+		f->glDeleteTextures(textures_.size(), textures_.data());
+	}
+    	
 }
-
 
 void IOBuffer::write()
 {
 	context_->functions()->glBindFramebuffer(GL_FRAMEBUFFER, buffer_);
 }
 
-void IOBuffer::read(GLenum TextureUnit)
+void IOBuffer::read(uint bufferNum, GLenum TextureUnit)
 {
 	auto * f = context_ ? context_->functions() : nullptr;
 	f->glActiveTexture(TextureUnit);
-	f->glBindTexture(GL_TEXTURE_2D, texture_);
+	if(bufferNum == 0) {
+		f->glBindTexture(GL_TEXTURE_2D, depthTexture_);
+	} else {
+		f->glBindTexture(GL_TEXTURE_2D, textures_[bufferNum - 1]);
+	}
 }
