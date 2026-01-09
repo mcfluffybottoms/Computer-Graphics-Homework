@@ -145,7 +145,7 @@ bool SceneRenderer::onInit(fgl::GLWidget * window)
 	entityModel = new EntityModel();
 	entityModel->setScale(QVector3D(0.5f, 0.5f, 0.5f));
 	entityModel->setPosition(QVector3D(0.0f, 0.0f, 0.0f));
-	entityModel->setRotation({0.0f, 0.0f, 0.0f});
+	entityModel->setRotation({-60.0f, -45.0f, 45.0f});
 	entityModel->setImportedModel(":/Models/steam_engine.glb");
 	entityModel->loadBuffers(lightBlock->getShader());
 	//entityModel->render(context_, 0);

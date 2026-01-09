@@ -62,7 +62,7 @@ Window::Window() noexcept
 		fps->setText(formatFPS(ui_.fps));
 	});
 
-	setFixedWidth(1000);
+	setFixedWidth(1500);
 	setFixedHeight(1000);
 
 }
