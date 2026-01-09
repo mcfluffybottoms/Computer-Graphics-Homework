@@ -114,7 +114,7 @@ std::shared_ptr<QOpenGLShaderProgram> SceneRenderer::LightBlock::getShader() {
 }
 
 SceneRenderer::SceneRenderer(std::shared_ptr<SharedData> data, OpenGLContextPtr context)
-	: camera_(new Camera()), context_(context), data_(data)
+	: camera_(std::make_shared<Camera>()), context_(context), data_(data)
 {
 	camera_->position().setX(0);
 	camera_->position().setY(0);
@@ -125,8 +125,6 @@ SceneRenderer::SceneRenderer(std::shared_ptr<SharedData> data, OpenGLContextPtr 
 
 SceneRenderer::~SceneRenderer()
 {
-	if (camera_)
-		delete camera_;
 	if (entityModel)
 		delete entityModel;
 }
@@ -148,7 +146,7 @@ bool SceneRenderer::onInit(fgl::GLWidget * window)
 	entityModel->setScale(QVector3D(0.5f, 0.5f, 0.5f));
 	entityModel->setPosition(QVector3D(0.0f, 0.0f, 0.0f));
 	entityModel->setRotation({0.0f, 0.0f, 0.0f});
-	entityModel->setImportedModel(":/Models/sbob.glb");
+	entityModel->setImportedModel(":/Models/steam_engine.glb");
 	entityModel->loadBuffers(lightBlock->getShader());
 	//entityModel->render(context_, 0);
 
@@ -216,13 +214,12 @@ bool SceneRenderer::lightPass(GLint default_framebuffer)
 	quad.render(context_);
 
 	lightBlock->disable();
-
 	return true;
 }
 
 bool SceneRenderer::onRender(GLint default_framebuffer)
 {
-	data_->currentCamera = camera_; // TODO
+	 // TODO
 	geometryPass();
 	SSAOPass();
 	blurPass();

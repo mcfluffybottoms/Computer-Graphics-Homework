@@ -63,5 +63,5 @@ struct SharedData {
 	bool hasBlur;
 	bool debugAO;
 
-	Camera* currentCamera = nullptr;
+	std::shared_ptr<Camera> currentCamera = nullptr;
 };

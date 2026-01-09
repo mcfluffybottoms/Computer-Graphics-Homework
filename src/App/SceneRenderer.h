@@ -28,7 +28,7 @@ struct SceneRenderer {
 	void rotateObj(const QVector2D & rotation);
 
 
-	Camera * camera_ = nullptr;
+	std::shared_ptr<Camera> camera_;
 
 private:
 	OpenGLContextPtr context_;

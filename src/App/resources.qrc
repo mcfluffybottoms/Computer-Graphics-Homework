@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/">
-        <file>Models/sbob.glb</file>
+        <file>Models/steam_engine.glb</file>
     </qresource>
     <qresource prefix="/">
         <file>Textures/back.jpg</file>

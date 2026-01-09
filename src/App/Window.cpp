@@ -94,7 +94,6 @@ void Window::onInit()
 	sceneRenderer->onInit(this);
 	
 	// Camera
-	sceneRenderer->camera_ = new Camera();
 	sceneRenderer->camera_->position().setX(0.0415709);
 	sceneRenderer->camera_->position().setY(-0.0718041);
 	sceneRenderer->camera_->position().setZ(20);

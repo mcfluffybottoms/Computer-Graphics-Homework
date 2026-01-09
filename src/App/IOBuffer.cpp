@@ -1,5 +1,4 @@
 #include "IOBuffer.h"
-#include <GL/gl.h>
 #include <iostream>
 
 IOBuffer::IOBuffer(OpenGLContextPtr context, uint width, uint height, bool hasDepthBuffer)
