@@ -106,8 +106,11 @@ std::vector<std::unique_ptr<QOpenGLTexture>> EntityModel::loadTextures(const tin
 			QImage qimg = QImage(image.image.data(), image.width, image.height, fmt);
 
 			auto tex = std::make_unique<QOpenGLTexture>(qimg);
+			tex->create();
+    		tex->bind();
 			tex->setMinMagFilters(QOpenGLTexture::LinearMipMapLinear, QOpenGLTexture::Linear);
 			tex->setWrapMode(QOpenGLTexture::Repeat);
+			tex->setMagnificationFilter(QOpenGLTexture::Linear);
 			tex->generateMipMaps();
 
 			textures_.push_back(std::move(tex));
@@ -255,6 +258,12 @@ bool EntityModel::loadBuffers(std::shared_ptr<QOpenGLShaderProgram> program_)
 		vaos_.push_back(std::move(vao_));
 		vbos_.push_back(std::move(vbo_));
 		ibos_.push_back(std::move(ibo_));
+
+		if (mesh.textureIndex >= 0 && mesh.textureIndex < static_cast<int>(importedModel->texture.size()))
+		{
+			importedModel->texture[mesh.textureIndex]->bind(0);
+			importedModel->texture[mesh.textureIndex]->release();
+		}
 	}
 
 	return true;

@@ -36,15 +36,18 @@ void SlidersGroup::createSliders()
 	ambientP_ = addSlider(0, 100, data->ambientP, 0.01f, "Ambient:", projectionLayout);
 
 	aoLayout = new QVBoxLayout(aoGroup);
-	aoSamples_ = addSlider(0, 5, data->samples, 1.0f, "Blur Samples:", aoLayout);
-	kernelSize_ = addSlider(1, 8, std::log2(data->kernelSize), 1.0f, "Kernel Size:", aoLayout);
 	hasAO_ = addToggle("SSAO", aoLayout);
 	data->hasAO = false;
-	hasBlur_ = addToggle("Has Blur", aoLayout);
-	data->hasBlur = false;
+	kernelSize_ = addSlider(1, 8, std::log2(data->kernelSize), 1.0f, "Kernel Size:", aoLayout);
+	sampleRadius_ = addSlider(0, 500, data->sampleRadius, 0.01f, "Sample Radius:", aoLayout);
+	bias_ = addSlider(0, 500, data->sigma, 0.001f, "Bias:", aoLayout);
+	//bias_ = addSlider(0, 100, data->sigma, 0.01f, "Bias:", aoLayout);
 	debugAO_ = addToggle("Debug SSAO Buffer", aoLayout);
 	data->debugAO = false;
-	sampleRadius_ = addSlider(0, 500, data->sampleRadius, 0.01f, "Sample Radius:", aoLayout);
+	hasBlur_ = addToggle("Has Blur", aoLayout);
+	data->hasBlur = false;
+	aoSamples_ = addSlider(0, 5, data->samples, 1.0f, "Blur Samples:", aoLayout);
+	sigma_ = addSlider(0, 200, data->sigma, 0.01f, "Sigma (Gauss Blur):", aoLayout);
 	setFixedWidth(300);
 }
 
@@ -122,7 +125,9 @@ void SlidersGroup::connectSignals()
 	connect(hasAO_, &QCheckBox::clicked, this, &SlidersGroup::onHasAOClicked);
 	connect(hasBlur_, &QCheckBox::clicked, this, &SlidersGroup::onHasBlurClicked);
 	connect(debugAO_, &QCheckBox::clicked, this, &SlidersGroup::onDebugAOClicked);
-	connect(sampleRadius_, &QSlider::valueChanged, this, &SlidersGroup::sampleRadiusClicked);
+	connect(sampleRadius_, &QSlider::valueChanged, this, &SlidersGroup::onSampleRadiusClicked);
+	connect(sigma_, &QSlider::valueChanged, this, &SlidersGroup::onSigmaClicked);
+	connect(bias_, &QSlider::valueChanged, this, &SlidersGroup::onBiasClicked);
 }
 
 void SlidersGroup::onCutOffClicked(int value)
@@ -242,4 +247,14 @@ void SlidersGroup::onSampleRadiusClicked(int value) {
 	data->sampleRadius = value * 0.01;
 	emit sampleRadiusClicked(value);
 	
+}
+
+void SlidersGroup::onBiasClicked(int value) {
+	data->bias = value * 0.001;
+	emit biasClicked(value);
+}
+
+void SlidersGroup::onSigmaClicked(int value) {
+	data->sigma = value * 0.01;
+	emit sigmaClicked(value);
 }

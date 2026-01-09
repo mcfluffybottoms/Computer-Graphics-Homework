@@ -72,6 +72,7 @@ void AmbientOcclusion::initUniformValues() {
     hasAOUniform_ = program_->uniformLocation("hasAO");
     sampleRadUniform_ = program_->uniformLocation("sampleRadius");
     screenSizeUniform_ = program_->uniformLocation("screenSize");
+    biasUniform_ = program_->uniformLocation("bias");
 }
 
 void AmbientOcclusion::setUniformValues() {
@@ -92,7 +93,7 @@ void AmbientOcclusion::setUniformValues() {
     program_->setUniformValue(kernelSizeUniform_, data_->kernelSize);
     program_->setUniformValue(hasAOUniform_, data_->hasAO);
     program_->setUniformValue(sampleRadUniform_, data_->sampleRadius);
-
+    program_->setUniformValue(biasUniform_, data_->bias);
     program_->setUniformValue(screenSizeUniform_, data_->size);
 }
 

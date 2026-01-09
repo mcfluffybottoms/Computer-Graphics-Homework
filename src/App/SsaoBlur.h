@@ -29,4 +29,5 @@ private:
     std::shared_ptr<QOpenGLShaderProgram> program_;
     GLuint samplesUniform_ = -1;
     GLuint hasBlurUniform_ = -1;
+    GLuint sigmaUniform_ = -1;
 };

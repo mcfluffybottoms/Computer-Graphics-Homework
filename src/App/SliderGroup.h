@@ -37,6 +37,8 @@ signals:
 	void hasBlurClicked(bool value);
 	void debugAOClicked(bool value);
 	void sampleRadiusClicked(int value);
+	void biasClicked(int value);
+	void sigmaClicked(int value);
 
 private slots:
 	void onAmbientChanged(int value);
@@ -60,6 +62,8 @@ private slots:
 	void onHasBlurClicked(bool value);
 	void onDebugAOClicked(bool value);
 	void onSampleRadiusClicked(int value);
+	void onBiasClicked(int value);
+	void onSigmaClicked(int value);
 private:
 	void createSliders();
 	void setupLayout();
@@ -101,6 +105,8 @@ private:
 	QCheckBox * hasAO_;
 	QCheckBox * hasBlur_;
 	QCheckBox * debugAO_;
+	QSlider * sigma_;
+	QSlider * bias_;
 
 	// layouts
 	QGroupBox * directionGroup = new QGroupBox("Direction Light Parameters");

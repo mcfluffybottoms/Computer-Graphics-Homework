@@ -22,12 +22,9 @@ set(SRCS
 
     SsaoBlur.cpp
     SsaoBlur.h
-    
+
     SceneRenderer.cpp
     SceneRenderer.h
-
-    Skybox.cpp
-    Skybox.h
 
     Light.cpp
     Light.h

@@ -24,12 +24,14 @@ std::shared_ptr<QOpenGLShaderProgram> Blur::getShader() {
 void Blur::initUniformValues() {
     samplesUniform_ = program_->uniformLocation("samples");
     hasBlurUniform_ = program_->uniformLocation("hasBlur");
+    sigmaUniform_ = program_->uniformLocation("sigma");
 }
 
 void Blur::setUniformValues() {
     program_->setUniformValue(samplesUniform_, data_->samples);
     program_->setUniformValue("colorMap", SSAO_UNIT_INDEX);
     program_->setUniformValue(hasBlurUniform_, data_->hasBlur);
+    program_->setUniformValue(sigmaUniform_, data_->sigma);
 }
 
 void Blur::enable() {

@@ -24,11 +24,8 @@
 #define BLUR_UNIT GL_TEXTURE6
 #define BLUR_UNIT_INDEX 6
 
-#define SKYBOX_UNIT GL_TEXTURE7
-#define SKYBOX_UNIT_INDEX 7
-
-#define NOISE_UNIT GL_TEXTURE8
-#define NOISE_UNIT_INDEX 8
+#define NOISE_UNIT GL_TEXTURE7
+#define NOISE_UNIT_INDEX 7
 
 struct SharedData {
 	// window size
@@ -60,6 +57,8 @@ struct SharedData {
 	int samples = 10;
 	int kernelSize = 64;
 	float sampleRadius = 0.5f;
+	float sigma = 1.0;
+	float bias = 0.025;
 	bool hasAO;
 	bool hasBlur;
 	bool debugAO;

@@ -1,8 +1,6 @@
 #pragma once
 
-#include "App/IOBuffer.h"
 #include "App/Light.h"
-#include "App/Skybox.h"
 #include "App/SliderGroup.h"
 #include "EntityModel.h"
 #include <Base/GLWidget.hpp>
@@ -83,7 +81,6 @@ private:
 
 	// model
 	EntityModel * entityModel = nullptr;
-	std::unique_ptr<Skybox> box;
 
 	// shared data
 	std::shared_ptr<SharedData> data_;

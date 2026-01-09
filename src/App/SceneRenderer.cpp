@@ -2,7 +2,6 @@
 #include "App/Camera.h"
 #include "App/EntityModel.h"
 #include "App/Light.h"
-#include "App/Skybox.h"
 #include "App/SliderGroup.h"
 #include <QBoxLayout>
 #include <QOpenGLFunctions>
@@ -151,11 +150,8 @@ bool SceneRenderer::onInit(fgl::GLWidget * window)
 	entityModel->setRotation({0.0f, 0.0f, 0.0f});
 	entityModel->setImportedModel(":/Models/sbob.glb");
 	entityModel->loadBuffers(lightBlock->getShader());
+	//entityModel->render(context_, 0);
 
-	// Load skybox
-	box = std::make_unique<Skybox>(context_, data_);
-	box->init();
-	
 	// Еnable depth test and face culling
 	f->glEnable(GL_DEPTH_TEST);
 	f->glDepthFunc(GL_LESS); 
@@ -173,8 +169,9 @@ bool SceneRenderer::onInit(fgl::GLWidget * window)
 bool SceneRenderer::geometryPass()
 {
 	geometryPassC->enable(entityModel->getTransform());
+	
 	entityModel->render(context_, COLOR_UNIT_INDEX);
-	//box->render(camera_);
+
 	geometryPassC->disable();
 
 	geometryPassC->readDepthBuffer();
@@ -216,18 +213,16 @@ bool SceneRenderer::lightPass(GLint default_framebuffer)
 	lightBlock->enable();
 	lightBlock->setUniforms(data_);
 	
-	//entityModel->render(context_, COLOR_UNIT_INDEX);
 	quad.render(context_);
 
 	lightBlock->disable();
-	//box->render(camera_);
 
 	return true;
 }
 
 bool SceneRenderer::onRender(GLint default_framebuffer)
 {
-	data_->currentCamera = camera_;
+	data_->currentCamera = camera_; // TODO
 	geometryPass();
 	SSAOPass();
 	blurPass();

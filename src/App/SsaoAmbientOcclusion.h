@@ -50,4 +50,5 @@ private:
     GLint kernelSizeUniform_ = -1;
     GLint hasAOUniform_ = -1;
     GLint sampleRadUniform_ = -1;
+    GLint biasUniform_ = -1;
 };

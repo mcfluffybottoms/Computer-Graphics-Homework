@@ -1,7 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>Models/sbob.glb</file>
-        <file>Models/cube.glb</file>
     </qresource>
     <qresource prefix="/">
         <file>Textures/back.jpg</file>
