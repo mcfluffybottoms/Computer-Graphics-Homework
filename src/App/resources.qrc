@@ -1,12 +1,25 @@
 <RCC>
     <qresource prefix="/">
-        <file>Models/chess.glb</file>
+        <file>Models/steam_engine.glb</file>
     </qresource>
     <qresource prefix="/">
-        <file>Textures/voronoi.png</file>
+        <file>Textures/back.jpg</file>
+        <file>Textures/bottom.jpg</file>
+        <file>Textures/front.jpg</file>
+        <file>Textures/left.jpg</file>
+        <file>Textures/right.jpg</file>
+        <file>Textures/top.jpg</file>
     </qresource>
     <qresource prefix="/">
-        <file>Shaders/diffuse.fs</file>
-        <file>Shaders/diffuse.vs</file>
+        <file>Shaders/phonglight.fs</file>
+        <file>Shaders/phonglight.vs</file>
+        <file>Shaders/ao.fs</file>
+        <file>Shaders/ao.vs</file>
+        <file>Shaders/blur.fs</file>
+        <file>Shaders/blur.vs</file>
+        <file>Shaders/geometry.fs</file>
+        <file>Shaders/geometry.vs</file>
+        <file>Shaders/skybox.fs</file>
+        <file>Shaders/skybox.vs</file>
     </qresource>
 </RCC>
